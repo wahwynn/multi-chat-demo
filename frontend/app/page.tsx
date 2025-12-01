@@ -175,7 +175,11 @@ export default function Home() {
       <div className="flex-1 flex flex-col">
         <div className="navbar bg-base-300 shadow-md px-6">
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">Multi-Chat Demo</h1>
+            <h1 className="text-2xl font-bold">
+              {selectedConversationId
+                ? conversations.find(c => c.id === selectedConversationId)?.title || 'Multi-Chat Demo'
+                : 'Multi-Chat Demo'}
+            </h1>
           </div>
           <div className="flex-none gap-2">
             {isLoading && (
