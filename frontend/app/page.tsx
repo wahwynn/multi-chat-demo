@@ -15,6 +15,7 @@ export default function Home() {
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
 
   // Load conversations on mount
   useEffect(() => {
@@ -29,6 +30,17 @@ export default function Home() {
       setCurrentMessages([]);
     }
   }, [selectedConversationId]);
+
+  // Polling effect for progressive loading
+  useEffect(() => {
+    if (!isPolling || !selectedConversationId) return;
+
+    const interval = setInterval(() => {
+      loadConversation(selectedConversationId);
+    }, 500);  // Poll every 500ms
+
+    return () => clearInterval(interval);
+  }, [isPolling, selectedConversationId]);
 
   const loadConversations = async () => {
     try {
@@ -50,9 +62,9 @@ export default function Home() {
     }
   };
 
-  const handleNewConversation = async (model: string = 'claude-sonnet-4-5') => {
+  const handleNewConversation = async (models: string[] = ['claude-sonnet-4-5']) => {
     try {
-      const newConv = await chatApi.createConversation('New Chat', model);
+      const newConv = await chatApi.createConversation('New Chat', models);
       setConversations([newConv, ...conversations]);
       setSelectedConversationId(newConv.id);
     } catch (err) {
@@ -89,17 +101,29 @@ export default function Home() {
   };
 
   const handleSendMessage = async (content: string) => {
-    if (!selectedConversationId) {
+    // Get the current conversation to know how many models to expect
+    const currentConversation = conversations.find(c => c.id === selectedConversationId);
+
+    if (!selectedConversationId || !currentConversation) {
       // Create a new conversation if none is selected (use default model)
       try {
-        const newConv = await chatApi.createConversation('New Chat', 'claude-sonnet-4-5');
+        const newConv = await chatApi.createConversation('New Chat', ['claude-sonnet-4-5']);
         setConversations([newConv, ...conversations]);
         setSelectedConversationId(newConv.id);
 
         // Send the message to the new conversation
         setIsLoading(true);
+        setIsPolling(true);
         const response = await chatApi.sendMessage(newConv.id, content);
-        setCurrentMessages([response.message, response.assistant_message]);
+
+        // Add user message and all assistant messages
+        setCurrentMessages([response.message, ...response.assistant_messages]);
+
+        // Check if we got all expected responses
+        if (response.assistant_messages.length >= newConv.selected_models.length) {
+          setIsPolling(false);
+        }
+
         setIsLoading(false);
 
         // Reload conversations to update the list
@@ -108,14 +132,24 @@ export default function Home() {
         setError('Failed to send message');
         console.error(err);
         setIsLoading(false);
+        setIsPolling(false);
       }
       return;
     }
 
     try {
       setIsLoading(true);
+      setIsPolling(true);
       const response = await chatApi.sendMessage(selectedConversationId, content);
-      setCurrentMessages([...currentMessages, response.message, response.assistant_message]);
+
+      // Add user message and all assistant messages
+      setCurrentMessages([...currentMessages, response.message, ...response.assistant_messages]);
+
+      // Check if we got all expected responses
+      if (response.assistant_messages.length >= currentConversation.selected_models.length) {
+        setIsPolling(false);
+      }
+
       setIsLoading(false);
 
       // Reload conversations to update timestamps
@@ -124,6 +158,7 @@ export default function Home() {
       setError('Failed to send message');
       console.error(err);
       setIsLoading(false);
+      setIsPolling(false);
     }
   };
 
@@ -168,7 +203,12 @@ export default function Home() {
             <span>{error}</span>
           </div>
         )}
-        <ChatWindow messages={currentMessages} />
+        <ChatWindow
+          messages={currentMessages}
+          expectedModelCount={
+            conversations.find(c => c.id === selectedConversationId)?.selected_models.length || 1
+          }
+        />
         <MessageInput onSend={handleSendMessage} disabled={isLoading} />
       </div>
     </div>

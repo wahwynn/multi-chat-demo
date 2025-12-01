@@ -7,7 +7,7 @@ interface ConversationListProps {
   conversations: Conversation[];
   selectedId: number | null;
   onSelect: (id: number) => void;
-  onNew: (model: string) => void;
+  onNew: (models: string[]) => void;  // Changed to accept array
   onDelete: (id: number) => void;
   onRename: (id: number, newTitle: string) => void;
 }
@@ -22,7 +22,7 @@ export default function ConversationList({
 }: ConversationListProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  const [selectedModel, setSelectedModel] = useState('claude-sonnet-4-5');
+  const [selectedModels, setSelectedModels] = useState<string[]>(['claude-sonnet-4-5']);  // Changed to array
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<Conversation | null>(null);
 
@@ -72,23 +72,44 @@ export default function ConversationList({
     setConversationToDelete(null);
   };
 
+  const handleModelToggle = (modelValue: string) => {
+    if (selectedModels.includes(modelValue)) {
+      // Remove if already selected (but keep at least one)
+      if (selectedModels.length > 1) {
+        setSelectedModels(selectedModels.filter(m => m !== modelValue));
+      }
+    } else if (selectedModels.length < 3) {
+      // Add if under limit
+      setSelectedModels([...selectedModels, modelValue]);
+    }
+  };
+
   return (
     <div className="w-80 bg-base-200 flex flex-col h-full">
       <div className="p-4 border-b border-base-300">
-        <select
-          value={selectedModel}
-          onChange={(e) => setSelectedModel(e.target.value)}
-          className="select select-bordered w-full mb-3 text-base"
-        >
-          {MODEL_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <div className="mb-3">
+          <div className="text-sm font-semibold mb-2">
+            Select Models ({selectedModels.length}/3)
+          </div>
+          <div className="space-y-2">
+            {MODEL_OPTIONS.map((option) => (
+              <label key={option.value} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedModels.includes(option.value)}
+                  onChange={() => handleModelToggle(option.value)}
+                  disabled={!selectedModels.includes(option.value) && selectedModels.length >= 3}
+                  className="checkbox checkbox-primary"
+                />
+                <span className="text-sm">{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
         <button
-          onClick={() => onNew(selectedModel)}
+          onClick={() => onNew(selectedModels)}
           className="btn btn-primary w-full text-base"
+          disabled={selectedModels.length === 0}
         >
           + New Chat
         </button>
@@ -123,7 +144,10 @@ export default function ConversationList({
                     {conv.title}
                   </h3>
                   <p className="text-sm opacity-70 mb-1">
-                    {MODEL_OPTIONS.find(m => m.value === conv.model)?.label || conv.model}
+                    {conv.selected_models.length} model{conv.selected_models.length > 1 ? 's' : ''}
+                  </p>
+                  <p className="text-xs opacity-60 mb-1">
+                    {conv.selected_models.map(m => MODEL_OPTIONS.find(opt => opt.value === m)?.label || m).join(', ')}
                   </p>
                   <p className="text-sm opacity-60">
                     {new Date(conv.updated_at).toLocaleDateString()}

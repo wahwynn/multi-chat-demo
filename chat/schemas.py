@@ -1,6 +1,6 @@
 from ninja import Schema
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 
 class MessageSchema(Schema):
@@ -8,12 +8,14 @@ class MessageSchema(Schema):
     role: str
     content: str
     created_at: datetime
+    model: Optional[str] = None  # Which model generated this (for assistant messages)
+    parent_message_id: Optional[int] = None  # For grouping responses
 
 
 class ConversationSchema(Schema):
     id: int
     title: str
-    model: str
+    selected_models: List[str]  # Changed from single model to array
     created_at: datetime
     updated_at: datetime
     messages: List[MessageSchema] = []
@@ -22,14 +24,14 @@ class ConversationSchema(Schema):
 class ConversationListSchema(Schema):
     id: int
     title: str
-    model: str
+    selected_models: List[str]  # Changed from single model to array
     created_at: datetime
     updated_at: datetime
 
 
 class CreateConversationSchema(Schema):
     title: str = "New Chat"
-    model: str = "claude-sonnet-4-5"
+    selected_models: List[str] = ["claude-sonnet-4-5"]  # Array with default
 
 
 class UpdateConversationSchema(Schema):
@@ -41,5 +43,5 @@ class SendMessageSchema(Schema):
 
 
 class ChatResponseSchema(Schema):
-    message: MessageSchema
-    assistant_message: MessageSchema
+    message: MessageSchema  # User message
+    assistant_messages: List[MessageSchema]  # Multiple responses (one per model)
