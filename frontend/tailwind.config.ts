@@ -15,7 +15,7 @@ const config: Config = {
   },
   plugins: [require("daisyui")],
   daisyui: {
-    themes: ["corporate", "business"],
+    themes: ["cupcake", "business"],
     darkTheme: "business",
     base: true,
     styled: true,
