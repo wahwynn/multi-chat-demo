@@ -1,13 +1,13 @@
 'use client';
 
-import { Conversation } from '@/lib/types';
+import { Conversation, MODEL_OPTIONS } from '@/lib/types';
 import { useState } from 'react';
 
 interface ConversationListProps {
   conversations: Conversation[];
   selectedId: number | null;
   onSelect: (id: number) => void;
-  onNew: () => void;
+  onNew: (model: string) => void;
   onDelete: (id: number) => void;
   onRename: (id: number, newTitle: string) => void;
 }
@@ -22,6 +22,7 @@ export default function ConversationList({
 }: ConversationListProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [selectedModel, setSelectedModel] = useState('claude-sonnet-4-5');
 
   const handleStartEdit = (conv: Conversation, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -53,8 +54,19 @@ export default function ConversationList({
   return (
     <div className="w-64 bg-gray-900 text-white flex flex-col">
       <div className="p-4 border-b border-gray-700">
+        <select
+          value={selectedModel}
+          onChange={(e) => setSelectedModel(e.target.value)}
+          className="w-full bg-gray-800 text-white text-sm py-2 px-3 rounded mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {MODEL_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
         <button
-          onClick={onNew}
+          onClick={() => onNew(selectedModel)}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
         >
           + New Chat
@@ -84,6 +96,9 @@ export default function ConversationList({
               ) : (
                 <>
                   <h3 className="font-semibold truncate">{conv.title}</h3>
+                  <p className="text-xs text-gray-500">
+                    {MODEL_OPTIONS.find(m => m.value === conv.model)?.label || conv.model}
+                  </p>
                   <p className="text-xs text-gray-400">
                     {new Date(conv.updated_at).toLocaleDateString()}
                   </p>

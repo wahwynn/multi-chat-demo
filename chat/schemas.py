@@ -13,6 +13,7 @@ class MessageSchema(Schema):
 class ConversationSchema(Schema):
     id: int
     title: str
+    model: str
     created_at: datetime
     updated_at: datetime
     messages: List[MessageSchema] = []
@@ -21,12 +22,14 @@ class ConversationSchema(Schema):
 class ConversationListSchema(Schema):
     id: int
     title: str
+    model: str
     created_at: datetime
     updated_at: datetime
 
 
 class CreateConversationSchema(Schema):
     title: str = "New Chat"
+    model: str = "claude-sonnet-4-5"
 
 
 class UpdateConversationSchema(Schema):

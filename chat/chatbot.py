@@ -2,12 +2,13 @@ import anthropic
 from django.conf import settings
 
 
-def get_chatbot_response(messages: list) -> str:
+def get_chatbot_response(messages: list, model: str = "claude-sonnet-4-5") -> str:
     """
     Get a response from the Anthropic Claude chatbot
 
     Args:
         messages: List of tuples containing (role, content) for conversation history
+        model: The Claude model to use for the response
 
     Returns:
         The chatbot's response as a string
@@ -25,7 +26,7 @@ def get_chatbot_response(messages: list) -> str:
 
         # Call Claude API
         response = client.messages.create(
-            model="claude-sonnet-4-5",
+            model=model,
             max_tokens=2048,
             messages=formatted_messages
         )

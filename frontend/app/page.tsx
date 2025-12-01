@@ -48,9 +48,9 @@ export default function Home() {
     }
   };
 
-  const handleNewConversation = async () => {
+  const handleNewConversation = async (model: string = 'claude-sonnet-4-5') => {
     try {
-      const newConv = await chatApi.createConversation();
+      const newConv = await chatApi.createConversation('New Chat', model);
       setConversations([newConv, ...conversations]);
       setSelectedConversationId(newConv.id);
     } catch (err) {
@@ -88,9 +88,9 @@ export default function Home() {
 
   const handleSendMessage = async (content: string) => {
     if (!selectedConversationId) {
-      // Create a new conversation if none is selected
+      // Create a new conversation if none is selected (use default model)
       try {
-        const newConv = await chatApi.createConversation();
+        const newConv = await chatApi.createConversation('New Chat', 'claude-sonnet-4-5');
         setConversations([newConv, ...conversations]);
         setSelectedConversationId(newConv.id);
 

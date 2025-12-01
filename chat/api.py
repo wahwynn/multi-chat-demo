@@ -25,7 +25,7 @@ def list_conversations(request):
 @router.post("/conversations", response=ConversationSchema)
 def create_conversation(request, payload: CreateConversationSchema):
     """Create a new conversation"""
-    conversation = Conversation.objects.create(title=payload.title)
+    conversation = Conversation.objects.create(title=payload.title, model=payload.model)
     return conversation
 
 
@@ -70,8 +70,8 @@ def send_message(request, conversation_id: int, payload: SendMessageSchema):
         conversation.messages.values_list('role', 'content')
     )
 
-    # Get chatbot response
-    bot_response = get_chatbot_response(previous_messages)
+    # Get chatbot response using the conversation's model
+    bot_response = get_chatbot_response(previous_messages, conversation.model)
 
     # Create assistant message
     assistant_message = Message.objects.create(

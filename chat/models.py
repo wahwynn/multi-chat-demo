@@ -4,7 +4,16 @@ from django.contrib.auth.models import User
 
 class Conversation(models.Model):
     """A conversation thread containing multiple messages"""
+    MODEL_CHOICES = [
+        ('claude-sonnet-4-5', 'Claude 4.5 Sonnet'),
+        ('claude-opus-4', 'Claude 4 Opus'),
+        ('claude-3-5-sonnet-20241022', 'Claude 3.5 Sonnet'),
+        ('claude-3-opus-20240229', 'Claude 3 Opus'),
+        ('claude-3-haiku-20240307', 'Claude 3 Haiku'),
+    ]
+
     title = models.CharField(max_length=255, default="New Chat")
+    model = models.CharField(max_length=50, choices=MODEL_CHOICES, default='claude-sonnet-4-5')
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
