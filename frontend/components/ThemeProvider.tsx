@@ -27,6 +27,7 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
   const [mounted, setMounted] = useState(false);
 
+  // Apply theme immediately on mount
   useEffect(() => {
     setMounted(true);
     // Check localStorage first, then system preference
@@ -42,22 +43,23 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Also apply theme when theme state changes
+  useEffect(() => {
+    if (mounted) {
+      applyTheme(theme);
+    }
+  }, [theme, mounted]);
+
   const applyTheme = (newTheme: Theme) => {
-    const daisyTheme = newTheme === 'dark' ? 'business' : 'cupcake';
-    document.documentElement.setAttribute('data-theme', daisyTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    console.log('Applied theme:', newTheme); // Debug log
   };
 
   const toggleTheme = () => {
     const newTheme: Theme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    applyTheme(newTheme);
   };
-
-  // Prevent flash of unstyled content
-  if (!mounted) {
-    return <>{children}</>;
-  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
