@@ -126,7 +126,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-base-100">
       <ConversationList
         conversations={conversations}
         selectedId={selectedConversationId}
@@ -135,13 +135,22 @@ export default function Home() {
         onDelete={handleDeleteConversation}
         onRename={handleRenameConversation}
       />
-      <div className="flex-1 flex flex-col bg-white">
-        <div className="bg-gray-800 text-white p-4 shadow-md">
-          <h1 className="text-xl font-semibold">Multi-Chat Demo</h1>
-          {error && (
-            <p className="text-red-400 text-sm mt-1">{error}</p>
+      <div className="flex-1 flex flex-col">
+        <div className="navbar bg-base-300 shadow-md">
+          <div className="flex-1">
+            <h1 className="text-xl font-semibold">Multi-Chat Demo</h1>
+          </div>
+          {isLoading && (
+            <div className="flex-none">
+              <span className="loading loading-spinner loading-sm"></span>
+            </div>
           )}
         </div>
+        {error && (
+          <div className="alert alert-error">
+            <span>{error}</span>
+          </div>
+        )}
         <ChatWindow messages={currentMessages} />
         <MessageInput onSend={handleSendMessage} disabled={isLoading} />
       </div>

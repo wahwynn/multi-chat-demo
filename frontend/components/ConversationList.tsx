@@ -52,12 +52,12 @@ export default function ConversationList({
   };
 
   return (
-    <div className="w-64 bg-gray-900 text-white flex flex-col">
-      <div className="p-4 border-b border-gray-700">
+    <div className="w-64 bg-base-200 flex flex-col h-full">
+      <div className="p-4 border-b border-base-300">
         <select
           value={selectedModel}
           onChange={(e) => setSelectedModel(e.target.value)}
-          className="w-full bg-gray-800 text-white text-sm py-2 px-3 rounded mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="select select-bordered w-full mb-2"
         >
           {MODEL_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -67,7 +67,7 @@ export default function ConversationList({
         </select>
         <button
           onClick={() => onNew(selectedModel)}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+          className="btn btn-primary w-full"
         >
           + New Chat
         </button>
@@ -76,8 +76,8 @@ export default function ConversationList({
         {conversations.map((conv) => (
           <div
             key={conv.id}
-            className={`p-4 cursor-pointer hover:bg-gray-800 border-b border-gray-700 flex justify-between items-center ${
-              selectedId === conv.id ? 'bg-gray-800' : ''
+            className={`p-4 cursor-pointer hover:bg-base-300 border-b border-base-300 flex justify-between items-center ${
+              selectedId === conv.id ? 'bg-base-300' : ''
             }`}
             onClick={() => editingId !== conv.id && onSelect(conv.id)}
           >
@@ -89,17 +89,22 @@ export default function ConversationList({
                   onChange={(e) => setEditTitle(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, conv.id)}
                   onBlur={() => handleSaveEdit(conv.id)}
-                  className="bg-gray-700 text-white px-2 py-1 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input input-bordered input-sm w-full"
                   autoFocus
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
                 <>
-                  <h3 className="font-semibold truncate">{conv.title}</h3>
-                  <p className="text-xs text-gray-500">
+                  <h3
+                    className="font-semibold truncate cursor-text hover:text-primary transition-colors"
+                    onDoubleClick={(e) => handleStartEdit(conv, e)}
+                  >
+                    {conv.title}
+                  </h3>
+                  <p className="text-xs opacity-60">
                     {MODEL_OPTIONS.find(m => m.value === conv.model)?.label || conv.model}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs opacity-50">
                     {new Date(conv.updated_at).toLocaleDateString()}
                   </p>
                 </>
@@ -109,7 +114,7 @@ export default function ConversationList({
               {editingId !== conv.id && (
                 <button
                   onClick={(e) => handleStartEdit(conv, e)}
-                  className="text-gray-400 hover:text-blue-500 transition-colors"
+                  className="btn btn-ghost btn-xs"
                   title="Rename"
                 >
                   ✎
@@ -118,9 +123,11 @@ export default function ConversationList({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDelete(conv.id);
+                  if (window.confirm(`Are you sure you want to delete "${conv.title}"?`)) {
+                    onDelete(conv.id);
+                  }
                 }}
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="btn btn-ghost btn-xs text-error"
                 title="Delete"
               >
                 ×
