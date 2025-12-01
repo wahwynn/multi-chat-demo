@@ -29,6 +29,10 @@ class CreateConversationSchema(Schema):
     title: str = "New Chat"
 
 
+class UpdateConversationSchema(Schema):
+    title: str
+
+
 class SendMessageSchema(Schema):
     content: str
 

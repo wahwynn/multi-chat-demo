@@ -6,6 +6,7 @@ from .schemas import (
     ConversationSchema,
     ConversationListSchema,
     CreateConversationSchema,
+    UpdateConversationSchema,
     SendMessageSchema,
     ChatResponseSchema,
 )
@@ -32,6 +33,15 @@ def create_conversation(request, payload: CreateConversationSchema):
 def get_conversation(request, conversation_id: int):
     """Get a specific conversation with all messages"""
     conversation = get_object_or_404(Conversation, id=conversation_id)
+    return conversation
+
+
+@router.patch("/conversations/{conversation_id}", response=ConversationSchema)
+def update_conversation(request, conversation_id: int, payload: UpdateConversationSchema):
+    """Update conversation title"""
+    conversation = get_object_or_404(Conversation, id=conversation_id)
+    conversation.title = payload.title
+    conversation.save()
     return conversation
 
 

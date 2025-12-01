@@ -63,6 +63,16 @@ export default function Home() {
     setSelectedConversationId(id);
   };
 
+  const handleRenameConversation = async (id: number, newTitle: string) => {
+    try {
+      const updatedConv = await chatApi.updateConversation(id, newTitle);
+      setConversations(conversations.map((c) => (c.id === id ? { ...c, title: updatedConv.title } : c)));
+    } catch (err) {
+      setError('Failed to rename conversation');
+      console.error(err);
+    }
+  };
+
   const handleDeleteConversation = async (id: number) => {
     try {
       await chatApi.deleteConversation(id);
@@ -123,6 +133,7 @@ export default function Home() {
         onSelect={handleSelectConversation}
         onNew={handleNewConversation}
         onDelete={handleDeleteConversation}
+        onRename={handleRenameConversation}
       />
       <div className="flex-1 flex flex-col bg-white">
         <div className="bg-gray-800 text-white p-4 shadow-md">
