@@ -206,7 +206,9 @@ export default function Home() {
         <ChatWindow
           messages={currentMessages}
           expectedModelCount={
-            conversations.find(c => c.id === selectedConversationId)?.selected_models.length || 1
+            selectedConversationId
+              ? conversations.find(c => c.id === selectedConversationId)?.selected_models.length || 1
+              : 1
           }
         />
         <MessageInput onSend={handleSendMessage} disabled={isLoading} />

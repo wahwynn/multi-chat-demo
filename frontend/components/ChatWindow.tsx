@@ -77,7 +77,7 @@ export default function ChatWindow({ messages, expectedModelCount }: ChatWindowP
             ))}
 
             {/* Loading placeholders for pending responses */}
-            {Array(expectedModelCount - group.responses.length).fill(0).map((_, i) => (
+            {Array(Math.max(0, expectedModelCount - group.responses.length)).fill(0).map((_, i) => (
               <div key={`loading-${i}`} className="card bg-base-200 shadow-md animate-pulse">
                 <div className="card-body p-4 flex items-center justify-center min-h-[100px]">
                   <span className="loading loading-spinner loading-lg"></span>
