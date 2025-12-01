@@ -136,18 +136,18 @@ export default function Home() {
         onRename={handleRenameConversation}
       />
       <div className="flex-1 flex flex-col">
-        <div className="navbar bg-base-300 shadow-md">
+        <div className="navbar bg-base-300 shadow-md px-6">
           <div className="flex-1">
-            <h1 className="text-xl font-semibold">Multi-Chat Demo</h1>
+            <h1 className="text-2xl font-bold">Multi-Chat Demo</h1>
           </div>
           {isLoading && (
             <div className="flex-none">
-              <span className="loading loading-spinner loading-sm"></span>
+              <span className="loading loading-spinner loading-md"></span>
             </div>
           )}
         </div>
         {error && (
-          <div className="alert alert-error">
+          <div className="alert alert-error text-base">
             <span>{error}</span>
           </div>
         )}

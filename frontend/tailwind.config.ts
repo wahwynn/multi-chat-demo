@@ -7,12 +7,16 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontSize: {
+        'base': '16px',
+      },
+    },
   },
   plugins: [require("daisyui")],
   daisyui: {
-    themes: ["light", "dark"],
-    darkTheme: "dark",
+    themes: ["corporate", "business"],
+    darkTheme: "business",
     base: true,
     styled: true,
     utils: true,

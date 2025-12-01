@@ -23,6 +23,8 @@ export default function ConversationList({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [selectedModel, setSelectedModel] = useState('claude-sonnet-4-5');
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [conversationToDelete, setConversationToDelete] = useState<Conversation | null>(null);
 
   const handleStartEdit = (conv: Conversation, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -51,13 +53,32 @@ export default function ConversationList({
     }
   };
 
+  const handleOpenDeleteModal = (conv: Conversation, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConversationToDelete(conv);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (conversationToDelete) {
+      onDelete(conversationToDelete.id);
+    }
+    setDeleteModalOpen(false);
+    setConversationToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false);
+    setConversationToDelete(null);
+  };
+
   return (
-    <div className="w-64 bg-base-200 flex flex-col h-full">
+    <div className="w-80 bg-base-200 flex flex-col h-full">
       <div className="p-4 border-b border-base-300">
         <select
           value={selectedModel}
           onChange={(e) => setSelectedModel(e.target.value)}
-          className="select select-bordered w-full mb-2"
+          className="select select-bordered w-full mb-3 text-base"
         >
           {MODEL_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -67,7 +88,7 @@ export default function ConversationList({
         </select>
         <button
           onClick={() => onNew(selectedModel)}
-          className="btn btn-primary w-full"
+          className="btn btn-primary w-full text-base"
         >
           + New Chat
         </button>
@@ -76,12 +97,12 @@ export default function ConversationList({
         {conversations.map((conv) => (
           <div
             key={conv.id}
-            className={`p-4 cursor-pointer hover:bg-base-300 border-b border-base-300 flex justify-between items-center ${
+            className={`p-4 cursor-pointer hover:bg-base-300 border-b border-base-300 flex justify-between items-center transition-colors ${
               selectedId === conv.id ? 'bg-base-300' : ''
             }`}
             onClick={() => editingId !== conv.id && onSelect(conv.id)}
           >
-            <div className="flex-1 truncate">
+            <div className="flex-1 truncate pr-2">
               {editingId === conv.id ? (
                 <input
                   type="text"
@@ -89,45 +110,40 @@ export default function ConversationList({
                   onChange={(e) => setEditTitle(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, conv.id)}
                   onBlur={() => handleSaveEdit(conv.id)}
-                  className="input input-bordered input-sm w-full"
+                  className="input input-bordered input-sm w-full text-base"
                   autoFocus
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
                 <>
                   <h3
-                    className="font-semibold truncate cursor-text hover:text-primary transition-colors"
+                    className="font-semibold truncate cursor-text hover:text-primary transition-colors text-base mb-1"
                     onDoubleClick={(e) => handleStartEdit(conv, e)}
                   >
                     {conv.title}
                   </h3>
-                  <p className="text-xs opacity-60">
+                  <p className="text-sm opacity-70 mb-1">
                     {MODEL_OPTIONS.find(m => m.value === conv.model)?.label || conv.model}
                   </p>
-                  <p className="text-xs opacity-50">
+                  <p className="text-sm opacity-60">
                     {new Date(conv.updated_at).toLocaleDateString()}
                   </p>
                 </>
               )}
             </div>
-            <div className="ml-2 flex gap-1">
+            <div className="ml-2 flex gap-1 flex-shrink-0">
               {editingId !== conv.id && (
                 <button
                   onClick={(e) => handleStartEdit(conv, e)}
-                  className="btn btn-ghost btn-xs"
+                  className="btn btn-ghost btn-sm text-base"
                   title="Rename"
                 >
                   ✎
                 </button>
               )}
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (window.confirm(`Are you sure you want to delete "${conv.title}"?`)) {
-                    onDelete(conv.id);
-                  }
-                }}
-                className="btn btn-ghost btn-xs text-error"
+                onClick={(e) => handleOpenDeleteModal(conv, e)}
+                className="btn btn-ghost btn-sm text-error text-xl"
                 title="Delete"
               >
                 ×
@@ -136,6 +152,25 @@ export default function ConversationList({
           </div>
         ))}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <dialog className={`modal ${deleteModalOpen ? 'modal-open' : ''}`}>
+        <div className="modal-box">
+          <h3 className="font-bold text-xl mb-4">Delete Conversation</h3>
+          <p className="py-4 text-base leading-relaxed">
+            Are you sure you want to delete <span className="font-semibold">"{conversationToDelete?.title}"</span>? This action cannot be undone.
+          </p>
+          <div className="modal-action">
+            <button onClick={handleCancelDelete} className="btn btn-lg">
+              Cancel
+            </button>
+            <button onClick={handleConfirmDelete} className="btn btn-error btn-lg">
+              Delete
+            </button>
+          </div>
+        </div>
+        <div className="modal-backdrop" onClick={handleCancelDelete}></div>
+      </dialog>
     </div>
   );
 }

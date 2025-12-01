@@ -21,25 +21,25 @@ export default function ChatWindow({ messages }: ChatWindowProps) {
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-2">Welcome to Multi-Chat</h2>
-          <p className="opacity-60">Start a conversation by typing a message below</p>
+        <div className="text-center px-4">
+          <h2 className="text-3xl font-bold mb-3">Welcome to Multi-Chat</h2>
+          <p className="text-lg opacity-70">Start a conversation by typing a message below</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4">
+    <div className="flex-1 overflow-y-auto p-6">
       {messages.map((message) => (
         <div
           key={message.id}
-          className={`chat ${message.role === 'user' ? 'chat-end' : 'chat-start'}`}
+          className={`chat ${message.role === 'user' ? 'chat-end' : 'chat-start'} mb-4`}
         >
-          <div className="chat-bubble">
+          <div className="chat-bubble text-base leading-relaxed min-h-[3rem]">
             <p className="whitespace-pre-wrap">{message.content}</p>
           </div>
-          <div className="chat-footer opacity-50 text-xs mt-1">
+          <div className="chat-footer opacity-60 text-sm mt-1">
             {new Date(message.created_at).toLocaleTimeString()}
           </div>
         </div>
