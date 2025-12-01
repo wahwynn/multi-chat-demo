@@ -27,13 +27,12 @@ def list_conversations(request):
 @router.post("/conversations", response=ConversationSchema)
 def create_conversation(request, payload: CreateConversationSchema):
     """Create a new conversation with multiple models"""
-    # Validate 1-3 models
-    if not payload.selected_models or len(payload.selected_models) > 3:
-        return {"error": "Must select 1-3 models"}
+    # Validate at least 1 model
+    if not payload.selected_models:
+        return {"error": "Must select at least 1 model"}
 
     conversation = Conversation.objects.create(
-        title=payload.title,
-        selected_models=payload.selected_models
+        title=payload.title, selected_models=payload.selected_models
     )
     return conversation
 
@@ -46,7 +45,9 @@ def get_conversation(request, conversation_id: int):
 
 
 @router.patch("/conversations/{conversation_id}", response=ConversationSchema)
-def update_conversation(request, conversation_id: int, payload: UpdateConversationSchema):
+def update_conversation(
+    request, conversation_id: int, payload: UpdateConversationSchema
+):
     """Update conversation title"""
     conversation = get_object_or_404(Conversation, id=conversation_id)
     conversation.title = payload.title
@@ -66,26 +67,24 @@ def delete_conversation(request, conversation_id: int):
 async def send_message(request, conversation_id: int, payload: SendMessageSchema):
     """Send a message and get responses from all selected models"""
     # Get conversation (sync operation)
-    conversation = await sync_to_async(get_object_or_404)(Conversation, id=conversation_id)
+    conversation = await sync_to_async(get_object_or_404)(
+        Conversation, id=conversation_id
+    )
 
     # Create user message
     user_message = await sync_to_async(Message.objects.create)(
-        conversation=conversation,
-        role='user',
-        content=payload.content
+        conversation=conversation, role="user", content=payload.content
     )
 
     # Get all previous messages for context (only parent messages, not model variants)
     previous_messages_query = conversation.messages.filter(
         parent_message__isnull=True
-    ).values_list('role', 'content')
+    ).values_list("role", "content")
     previous_messages = await sync_to_async(list)(previous_messages_query)
 
     # Get responses from all selected models in parallel
     model_responses = await get_multi_model_responses(
-        previous_messages,
-        conversation.selected_models,
-        settings.ANTHROPIC_API_KEY
+        previous_messages, conversation.selected_models, settings.ANTHROPIC_API_KEY
     )
 
     # Create assistant messages for each model response
@@ -93,17 +92,14 @@ async def send_message(request, conversation_id: int, payload: SendMessageSchema
     for model_id, response_text in model_responses:
         assistant_msg = await sync_to_async(Message.objects.create)(
             conversation=conversation,
-            role='assistant',
+            role="assistant",
             content=response_text,
             model=model_id,
-            parent_message=user_message
+            parent_message=user_message,
         )
         assistant_messages.append(assistant_msg)
 
     # Update conversation timestamp
     await sync_to_async(conversation.save)()
 
-    return {
-        "message": user_message,
-        "assistant_messages": assistant_messages
-    }
+    return {"message": user_message, "assistant_messages": assistant_messages}

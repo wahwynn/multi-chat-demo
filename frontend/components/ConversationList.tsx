@@ -78,8 +78,7 @@ export default function ConversationList({
       if (selectedModels.length > 1) {
         setSelectedModels(selectedModels.filter(m => m !== modelValue));
       }
-    } else if (selectedModels.length < 3) {
-      // Add if under limit
+    } else {
       setSelectedModels([...selectedModels, modelValue]);
     }
   };
@@ -89,7 +88,7 @@ export default function ConversationList({
       <div className="p-4 border-b border-base-300">
         <div className="mb-3">
           <div className="text-sm font-semibold mb-2">
-            Select Models ({selectedModels.length}/3)
+            Select Models ({selectedModels.length})
           </div>
           <div className="space-y-2">
             {MODEL_OPTIONS.map((option) => (
@@ -98,8 +97,8 @@ export default function ConversationList({
                   type="checkbox"
                   checked={selectedModels.includes(option.value)}
                   onChange={() => handleModelToggle(option.value)}
-                  disabled={!selectedModels.includes(option.value) && selectedModels.length >= 3}
-                  className="checkbox checkbox-primary"
+                  disabled={false}
+                  className="checkbox checkbox-primary checkbox-sm"
                 />
                 <span className="text-sm">{option.label}</span>
               </label>

@@ -28,8 +28,8 @@ class Conversation(models.Model):
         """Validate selected_models field"""
         if not isinstance(self.selected_models, list):
             raise ValidationError("Models must be a list")
-        if len(self.selected_models) < 1 or len(self.selected_models) > 3:
-            raise ValidationError("Must select 1-3 models")
+        if len(self.selected_models) < 1:
+            raise ValidationError("Must select at least 1 model")
         for model in self.selected_models:
             if model not in self.VALID_MODELS:
                 raise ValidationError(f"Invalid model: {model}")
