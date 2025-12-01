@@ -1,0 +1,139 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import ConversationList from '@/components/ConversationList';
+import ChatWindow from '@/components/ChatWindow';
+import MessageInput from '@/components/MessageInput';
+import { chatApi } from '@/lib/api';
+import { Conversation, Message } from '@/lib/types';
+
+export default function Home() {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
+  const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load conversations on mount
+  useEffect(() => {
+    loadConversations();
+  }, []);
+
+  // Load messages when conversation is selected
+  useEffect(() => {
+    if (selectedConversationId) {
+      loadConversation(selectedConversationId);
+    } else {
+      setCurrentMessages([]);
+    }
+  }, [selectedConversationId]);
+
+  const loadConversations = async () => {
+    try {
+      const data = await chatApi.getConversations();
+      setConversations(data);
+    } catch (err) {
+      setError('Failed to load conversations');
+      console.error(err);
+    }
+  };
+
+  const loadConversation = async (id: number) => {
+    try {
+      const data = await chatApi.getConversation(id);
+      setCurrentMessages(data.messages || []);
+    } catch (err) {
+      setError('Failed to load conversation');
+      console.error(err);
+    }
+  };
+
+  const handleNewConversation = async () => {
+    try {
+      const newConv = await chatApi.createConversation();
+      setConversations([newConv, ...conversations]);
+      setSelectedConversationId(newConv.id);
+    } catch (err) {
+      setError('Failed to create conversation');
+      console.error(err);
+    }
+  };
+
+  const handleSelectConversation = (id: number) => {
+    setSelectedConversationId(id);
+  };
+
+  const handleDeleteConversation = async (id: number) => {
+    try {
+      await chatApi.deleteConversation(id);
+      setConversations(conversations.filter((c) => c.id !== id));
+      if (selectedConversationId === id) {
+        setSelectedConversationId(null);
+      }
+    } catch (err) {
+      setError('Failed to delete conversation');
+      console.error(err);
+    }
+  };
+
+  const handleSendMessage = async (content: string) => {
+    if (!selectedConversationId) {
+      // Create a new conversation if none is selected
+      try {
+        const newConv = await chatApi.createConversation();
+        setConversations([newConv, ...conversations]);
+        setSelectedConversationId(newConv.id);
+
+        // Send the message to the new conversation
+        setIsLoading(true);
+        const response = await chatApi.sendMessage(newConv.id, content);
+        setCurrentMessages([response.message, response.assistant_message]);
+        setIsLoading(false);
+
+        // Reload conversations to update the list
+        loadConversations();
+      } catch (err) {
+        setError('Failed to send message');
+        console.error(err);
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await chatApi.sendMessage(selectedConversationId, content);
+      setCurrentMessages([...currentMessages, response.message, response.assistant_message]);
+      setIsLoading(false);
+
+      // Reload conversations to update timestamps
+      loadConversations();
+    } catch (err) {
+      setError('Failed to send message');
+      console.error(err);
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      <ConversationList
+        conversations={conversations}
+        selectedId={selectedConversationId}
+        onSelect={handleSelectConversation}
+        onNew={handleNewConversation}
+        onDelete={handleDeleteConversation}
+      />
+      <div className="flex-1 flex flex-col bg-white">
+        <div className="bg-gray-800 text-white p-4 shadow-md">
+          <h1 className="text-xl font-semibold">Multi-Chat Demo</h1>
+          {error && (
+            <p className="text-red-400 text-sm mt-1">{error}</p>
+          )}
+        </div>
+        <ChatWindow messages={currentMessages} />
+        <MessageInput onSend={handleSendMessage} disabled={isLoading} />
+      </div>
+    </div>
+  );
+}
