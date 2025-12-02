@@ -10,7 +10,10 @@ class Conversation(models.Model):
         ("claude-sonnet-4-5", "Claude 4.5 Sonnet"),
         ("claude-haiku-4-5", "Claude 4.5 Haiku"),
         ("claude-opus-4-5", "Claude 4.5 Opus"),
-        ("claude-opus-4-1", "Claude 4.1 Opus"),
+        ("ollama-llama3.2", "Ollama Llama 3.2"),
+        ("ollama-llama3.1", "Ollama Llama 3.1"),
+        ("ollama-mistral", "Ollama Mistral"),
+        ("ollama-phi3", "Ollama Phi-3"),
     ]
 
     VALID_MODELS = [choice[0] for choice in MODEL_CHOICES]

@@ -140,5 +140,8 @@ CORS_ALLOW_CREDENTIALS = True
 # Anthropic API Key
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 
+# Ollama Base URL (defaults to localhost)
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
 # Chat context window size (number of recent messages to include)
 CHAT_CONTEXT_WINDOW_SIZE = int(os.getenv("CHAT_CONTEXT_WINDOW_SIZE", "10"))

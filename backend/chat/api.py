@@ -107,7 +107,10 @@ async def send_message(request, conversation_id: int, payload: SendMessageSchema
 
     # Get responses from all selected models in parallel
     model_responses = await get_multi_model_responses(
-        previous_messages, conversation.selected_models, settings.ANTHROPIC_API_KEY
+        previous_messages,
+        conversation.selected_models,
+        settings.ANTHROPIC_API_KEY,
+        settings.OLLAMA_BASE_URL,
     )
 
     # Create assistant messages for each model response
