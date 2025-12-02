@@ -76,16 +76,33 @@ async def send_message(request, conversation_id: int, payload: SendMessageSchema
         conversation=conversation, role="user", content=payload.content
     )
 
-    # Get all previous messages for context (only parent messages, not model variants)
-    def get_previous_messages():
-        return list(
+    # Get recent messages within context window (default: last 10 messages)
+    # This provides conversation context while limiting the history
+    CONTEXT_WINDOW_SIZE = getattr(settings, "CHAT_CONTEXT_WINDOW_SIZE", 10)
+
+    def get_recent_messages():
+        # Get recent messages before the current one, ordered chronologically
+        # Use created_at to exclude the message we just created
+        user_msg_created_at = user_message.created_at
+        all_messages = list(
             Message.objects.filter(
-                conversation=conversation, parent_message__isnull=True
-            ).values_list("role", "content")
+                conversation=conversation, created_at__lt=user_msg_created_at
+            ).order_by("created_at")
         )
 
+        # Get the last CONTEXT_WINDOW_SIZE messages
+        # Ensure window_size is positive to avoid negative indexing errors
+        window_size = max(1, CONTEXT_WINDOW_SIZE)
+        recent_messages = all_messages[-window_size:] if all_messages else []
+
+        # Always include the current user message so the chatbot knows what to respond to
+        recent_messages.append(user_message)
+
+        # Convert to list of (role, content) tuples
+        return [(msg.role, msg.content) for msg in recent_messages]
+
     previous_messages: List[tuple[str, str]] = await sync_to_async(
-        get_previous_messages
+        get_recent_messages
     )()
 
     # Get responses from all selected models in parallel
