@@ -1,3 +1,5 @@
+import uuid
+import os
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -5,11 +7,18 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 
+def avatar_upload_path(instance: "UserProfile", filename: str) -> str:
+    """Generate a unique filename for avatar uploads"""
+    ext = os.path.splitext(filename)[1].lower()
+    unique_filename = f"{uuid.uuid4().hex}{ext}"
+    return f"avatars/{unique_filename}"
+
+
 class UserProfile(models.Model):
     """Extended user profile with avatar support"""
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
+    avatar = models.ImageField(upload_to=avatar_upload_path, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

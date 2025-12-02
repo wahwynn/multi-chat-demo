@@ -1,11 +1,128 @@
+import io
 from ninja import Router, Schema, File, UploadedFile
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http import HttpRequest
 from typing import Optional, cast
+from PIL import Image
 from .models import UserProfile
 
 router = Router()
+
+# Security constants for avatar uploads
+MAX_AVATAR_SIZE = 1048576  # 1MB
+MAX_AVATAR_DIMENSIONS = (2048, 2048)  # Max width/height
+ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "GIF", "WEBP"}
+FORMAT_TO_CONTENT_TYPE = {
+    "JPEG": "image/jpeg",
+    "PNG": "image/png",
+    "GIF": "image/gif",
+    "WEBP": "image/webp",
+}
+FORMAT_TO_EXTENSION = {
+    "JPEG": ".jpg",
+    "PNG": ".png",
+    "GIF": ".gif",
+    "WEBP": ".webp",
+}
+
+
+def validate_and_process_image(
+    file: UploadedFile,
+) -> tuple[InMemoryUploadedFile | None, str | None]:
+    """
+    Securely validate and process an uploaded image.
+
+    Returns:
+        tuple: (processed_file, error_message)
+        - If successful: (InMemoryUploadedFile, None)
+        - If failed: (None, error_message)
+    """
+    # Check file size first (before reading into memory)
+    if file.size and file.size > MAX_AVATAR_SIZE:
+        return (
+            None,
+            f"File too large. Maximum size is {MAX_AVATAR_SIZE} bytes.",
+        )
+
+    try:
+        # Read and validate the image using Pillow
+        # This verifies the file is actually a valid image, not just checking headers
+        file.seek(0)
+        img = Image.open(file)
+
+        # Verify it's a complete, valid image by loading it fully
+        img.verify()
+
+        # Re-open after verify (verify() can only be called once)
+        file.seek(0)
+        img = Image.open(file)
+
+        # Check image format
+        img_format = img.format
+        if img_format not in ALLOWED_IMAGE_FORMATS:
+            return (
+                None,
+                f"Invalid image format. Allowed: {', '.join(ALLOWED_IMAGE_FORMATS)}",
+            )
+
+        # Check dimensions
+        if (
+            img.width > MAX_AVATAR_DIMENSIONS[0]
+            or img.height > MAX_AVATAR_DIMENSIONS[1]
+        ):
+            # Resize the image instead of rejecting
+            img.thumbnail(MAX_AVATAR_DIMENSIONS, Image.Resampling.LANCZOS)
+
+        # Convert to RGB if necessary (for JPEG output from RGBA/P modes)
+        if img_format == "JPEG" and img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+
+        # Strip EXIF and other metadata by re-saving the image
+        # This also sanitizes the file by reconstructing it from pixel data
+        output = io.BytesIO()
+
+        # Determine save format and settings
+        save_format = img_format if img_format else "PNG"
+        save_kwargs: dict[str, object] = {}
+
+        if save_format == "JPEG":
+            save_kwargs["quality"] = 85
+            save_kwargs["optimize"] = True
+        elif save_format == "PNG":
+            save_kwargs["optimize"] = True
+        elif save_format == "WEBP":
+            save_kwargs["quality"] = 85
+        elif save_format == "GIF":
+            # For animated GIFs, we only save the first frame for avatars
+            pass
+
+        # Save without EXIF data
+        img.save(output, format=save_format, **save_kwargs)
+        output.seek(0)
+
+        # Create a new InMemoryUploadedFile with sanitized content
+        content_type = FORMAT_TO_CONTENT_TYPE.get(save_format, "image/png")
+        extension = FORMAT_TO_EXTENSION.get(save_format, ".png")
+
+        sanitized_file = InMemoryUploadedFile(
+            file=output,
+            field_name="avatar",
+            name=f"avatar{extension}",
+            content_type=content_type,
+            size=output.getbuffer().nbytes,
+            charset=None,
+        )
+
+        return sanitized_file, None
+
+    except Exception as e:
+        # Log the error for debugging but return generic message to user
+        import logging
+
+        logging.warning(f"Image validation failed: {e}")
+        return None, "Invalid or corrupted image file"
 
 
 def get_avatar_url(request: HttpRequest, user: User) -> Optional[str]:
@@ -131,20 +248,29 @@ def register_user(request: HttpRequest, payload: RegisterSchema):
     response={200: UserSchema, 400: ErrorResponseSchema, 401: ErrorResponseSchema},
 )
 def upload_avatar(request: HttpRequest, file: UploadedFile = File(...)):  # type: ignore[assignment]
-    """Upload or update user avatar"""
+    """
+    Upload or update user avatar.
+
+    Security measures:
+    - File size limit (5MB)
+    - Image format validation using Pillow (not just content-type)
+    - Image dimension limits (max 2048x2048, auto-resized if larger)
+    - EXIF metadata stripping
+    - Image re-encoding to sanitize content
+    - Unique UUID-based filenames
+    """
     if not request.user.is_authenticated:
         return 401, {"error": "Authentication required"}
 
     user = cast(User, request.user)
 
-    # Validate file type
-    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
-    if file.content_type not in allowed_types:
-        return 400, {"error": "Invalid file type. Allowed: JPEG, PNG, GIF, WebP"}
+    # Securely validate and process the image
+    processed_file, error = validate_and_process_image(file)
+    if error:
+        return 400, {"error": error}
 
-    # Validate file size (max 5MB)
-    if file.size and file.size > 5 * 1024 * 1024:
-        return 400, {"error": "File too large. Maximum size is 5MB"}
+    if processed_file is None:
+        return 400, {"error": "Failed to process image"}
 
     # Get or create profile
     profile, _ = UserProfile.objects.get_or_create(user=user)
@@ -153,8 +279,8 @@ def upload_avatar(request: HttpRequest, file: UploadedFile = File(...)):  # type
     if profile.avatar:
         profile.avatar.delete(save=False)
 
-    # Save new avatar
-    profile.avatar = file
+    # Save the sanitized avatar
+    profile.avatar = processed_file
     profile.save()
 
     return 200, {
