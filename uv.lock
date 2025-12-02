@@ -330,6 +330,7 @@ dependencies = [
     { name = "django-cors-headers" },
     { name = "django-ninja" },
     { name = "django-stubs" },
+    { name = "httpx" },
     { name = "python-dotenv" },
 ]
 
@@ -347,6 +348,7 @@ requires-dist = [
     { name = "django-cors-headers", specifier = ">=4.9.0" },
     { name = "django-ninja", specifier = ">=1.5.0" },
     { name = "django-stubs", specifier = ">=5.2.8" },
+    { name = "httpx", specifier = ">=0.27.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
 ]
 

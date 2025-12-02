@@ -12,3 +12,9 @@
     line-height: 1.6;
   }
 }
+
+@layer utilities {
+  .delay-1000 {
+    animation-delay: 1000ms;
+  }
+}
