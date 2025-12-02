@@ -108,10 +108,13 @@ export default function ConversationList({
         </div>
         <button
           onClick={() => onNew(selectedModels)}
-          className="btn btn-primary w-full text-base"
+          className="btn w-full text-base font-bold shadow-lg hover:shadow-xl transition-all py-3 text-lg bg-blue-600 hover:bg-blue-700 text-white border-none"
           disabled={selectedModels.length === 0}
         >
-          + New Chat
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          New Chat
         </button>
       </div>
       <div className="flex-1 overflow-y-auto">
