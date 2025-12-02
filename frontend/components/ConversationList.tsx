@@ -182,7 +182,7 @@ export default function ConversationList({
         <div className="modal-box">
           <h3 className="font-bold text-xl mb-4">Delete Conversation</h3>
           <p className="py-4 text-base leading-relaxed">
-            Are you sure you want to delete <span className="font-semibold">"{conversationToDelete?.title}"</span>? This action cannot be undone.
+            Are you sure you want to delete <span className="font-semibold">&quot;{conversationToDelete?.title}&quot;</span>? This action cannot be undone.
           </p>
           <div className="modal-action">
             <button onClick={handleCancelDelete} className="btn btn-lg">

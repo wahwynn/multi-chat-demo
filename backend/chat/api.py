@@ -12,7 +12,7 @@ from .schemas import (
     SendMessageSchema,
     ChatResponseSchema,
 )
-from .chatbot import get_chatbot_response, get_multi_model_responses
+from .chatbot import get_multi_model_responses
 
 router = Router()
 
