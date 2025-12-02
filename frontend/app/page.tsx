@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ConversationList from '@/components/ConversationList';
 import ChatWindow from '@/components/ChatWindow';
 import MessageInput from '@/components/MessageInput';
@@ -18,6 +18,8 @@ export default function Home() {
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check authentication status on mount
   useEffect(() => {
@@ -57,6 +59,54 @@ export default function Home() {
       setCurrentMessages([]);
     } catch (err) {
       console.error('Logout failed:', err);
+    }
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Invalid file type. Please use JPEG, PNG, GIF, or WebP.');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File too large. Maximum size is 5MB.');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const updatedUser = await authApi.uploadAvatar(file);
+      setUser(updatedUser);
+      setError(null);
+    } catch (err) {
+      console.error('Avatar upload failed:', err);
+      setError('Failed to upload avatar. Please try again.');
+    } finally {
+      setIsUploadingAvatar(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    try {
+      const updatedUser = await authApi.deleteAvatar();
+      setUser(updatedUser);
+    } catch (err) {
+      console.error('Avatar delete failed:', err);
+      setError('Failed to delete avatar. Please try again.');
     }
   };
 
@@ -214,14 +264,67 @@ export default function Home() {
             )}
             <div className="dropdown dropdown-end">
               <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar placeholder">
-                <div className="w-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                  <span className="text-lg">{user.username.charAt(0).toUpperCase()}</span>
-                </div>
+                {user.avatar_url ? (
+                  <div className="w-10 rounded-full ring ring-purple-500 ring-offset-base-100 ring-offset-1">
+                    <img src={user.avatar_url} alt={user.username} className="rounded-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                    <span className="text-lg">{user.username.charAt(0).toUpperCase()}</span>
+                  </div>
+                )}
               </div>
-              <ul tabIndex={0} className="dropdown-content menu menu-sm bg-base-200 rounded-box z-[1] mt-3 w-52 p-2 shadow-lg">
+              <ul tabIndex={0} className="dropdown-content menu menu-sm bg-base-200 rounded-box z-[1] mt-3 w-64 p-2 shadow-lg">
                 <li className="menu-title px-4 py-2">
                   <span className="font-semibold">{user.username}</span>
                   <span className="text-xs opacity-70">{user.email}</span>
+                </li>
+                <div className="divider my-1"></div>
+                {/* Avatar section */}
+                <li className="px-2 py-2">
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="relative">
+                      {user.avatar_url ? (
+                        <div className="w-12 h-12 rounded-full ring ring-purple-500 ring-offset-base-100 ring-offset-1 overflow-hidden">
+                          <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-white text-xl font-semibold">
+                          {user.username.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      {isUploadingAvatar && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                          <span className="loading loading-spinner loading-sm text-white"></span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1 flex-1">
+                      <button
+                        onClick={handleAvatarClick}
+                        disabled={isUploadingAvatar}
+                        className="btn btn-xs btn-primary"
+                      >
+                        {user.avatar_url ? 'Change' : 'Upload'} photo
+                      </button>
+                      {user.avatar_url && (
+                        <button
+                          onClick={handleDeleteAvatar}
+                          disabled={isUploadingAvatar}
+                          className="btn btn-xs btn-ghost text-error"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
                 </li>
                 <div className="divider my-1"></div>
                 <li>
@@ -271,6 +374,7 @@ export default function Home() {
               ? conversations.find(c => c.id === selectedConversationId)?.selected_models.length || 1
               : 1
           }
+          user={user}
         />
         <MessageInput onSend={handleSendMessage} disabled={isLoading} />
       </div>

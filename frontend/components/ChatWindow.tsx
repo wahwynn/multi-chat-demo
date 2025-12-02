@@ -1,14 +1,15 @@
 'use client';
 
-import { Message, MODEL_OPTIONS } from '@/lib/types';
+import { Message, MODEL_OPTIONS, User } from '@/lib/types';
 import { useEffect, useRef, useMemo } from 'react';
 
 interface ChatWindowProps {
   messages: Message[];
   expectedModelCount: number;  // How many models we expect responses from
+  user?: User | null;  // Current user for avatar display
 }
 
-export default function ChatWindow({ messages, expectedModelCount }: ChatWindowProps) {
+export default function ChatWindow({ messages, expectedModelCount, user }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -51,6 +52,17 @@ export default function ChatWindow({ messages, expectedModelCount }: ChatWindowP
         <div key={group.user.id} className="mb-8">
           {/* User message */}
           <div className="chat chat-end mb-4">
+            <div className="chat-image avatar placeholder">
+              {user?.avatar_url ? (
+                <div className="w-10 h-10 rounded-full ring ring-purple-500/50 ring-offset-base-100 ring-offset-1 overflow-hidden">
+                  <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                  {user?.username?.charAt(0)?.toUpperCase() || 'U'}
+                </div>
+              )}
+            </div>
             <div className="chat-bubble text-base leading-relaxed min-h-[3rem]">
               <p className="whitespace-pre-wrap">{group.user.content}</p>
             </div>

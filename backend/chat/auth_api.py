@@ -1,10 +1,22 @@
-from ninja import Router, Schema
+from ninja import Router, Schema, File, UploadedFile
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.http import HttpRequest
 from typing import Optional, cast
+from .models import UserProfile
 
 router = Router()
+
+
+def get_avatar_url(request: HttpRequest, user: User) -> Optional[str]:
+    """Get the full URL for a user's avatar"""
+    try:
+        profile = user.profile  # type: ignore[attr-defined]
+        if profile.avatar:
+            return request.build_absolute_uri(profile.avatar.url)
+    except UserProfile.DoesNotExist:
+        pass
+    return None
 
 
 class LoginSchema(Schema):
@@ -22,6 +34,7 @@ class UserSchema(Schema):
     id: int
     username: str
     email: str
+    avatar_url: Optional[str] = None
 
 
 class MessageResponseSchema(Schema):
@@ -48,6 +61,7 @@ def get_current_user(request: HttpRequest):
                 "id": user.pk,
                 "username": user.username,
                 "email": user.email,
+                "avatar_url": get_avatar_url(request, user),
             },
         }
     return {
@@ -67,6 +81,7 @@ def login_user(request: HttpRequest, payload: LoginSchema):
             "id": user.pk,
             "username": user.username,
             "email": user.email,
+            "avatar_url": get_avatar_url(request, user),
         }
     return 401, {"error": "Invalid username or password"}
 
@@ -107,4 +122,67 @@ def register_user(request: HttpRequest, payload: RegisterSchema):
         "id": user.pk,
         "username": user.username,
         "email": user.email,
+        "avatar_url": None,  # New users don't have avatars yet
+    }
+
+
+@router.post(
+    "/avatar",
+    response={200: UserSchema, 400: ErrorResponseSchema, 401: ErrorResponseSchema},
+)
+def upload_avatar(request: HttpRequest, file: UploadedFile = File(...)):  # type: ignore[assignment]
+    """Upload or update user avatar"""
+    if not request.user.is_authenticated:
+        return 401, {"error": "Authentication required"}
+
+    user = cast(User, request.user)
+
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if file.content_type not in allowed_types:
+        return 400, {"error": "Invalid file type. Allowed: JPEG, PNG, GIF, WebP"}
+
+    # Validate file size (max 5MB)
+    if file.size and file.size > 5 * 1024 * 1024:
+        return 400, {"error": "File too large. Maximum size is 5MB"}
+
+    # Get or create profile
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+
+    # Delete old avatar if exists
+    if profile.avatar:
+        profile.avatar.delete(save=False)
+
+    # Save new avatar
+    profile.avatar = file
+    profile.save()
+
+    return 200, {
+        "id": user.pk,
+        "username": user.username,
+        "email": user.email,
+        "avatar_url": get_avatar_url(request, user),
+    }
+
+
+@router.delete("/avatar", response={200: UserSchema, 401: ErrorResponseSchema})
+def delete_avatar(request: HttpRequest):
+    """Delete user avatar"""
+    if not request.user.is_authenticated:
+        return 401, {"error": "Authentication required"}
+
+    user = cast(User, request.user)
+
+    try:
+        profile = user.profile  # type: ignore[attr-defined]
+        if profile.avatar:
+            profile.avatar.delete(save=True)
+    except UserProfile.DoesNotExist:
+        pass
+
+    return 200, {
+        "id": user.pk,
+        "username": user.username,
+        "email": user.email,
+        "avatar_url": None,
     }
