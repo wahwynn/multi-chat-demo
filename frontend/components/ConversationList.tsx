@@ -90,18 +90,19 @@ export default function ConversationList({
           <div className="text-sm font-semibold mb-2">
             Select Models ({selectedModels.length})
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {MODEL_OPTIONS.map((option) => (
-              <label key={option.value} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selectedModels.includes(option.value)}
-                  onChange={() => handleModelToggle(option.value)}
-                  disabled={false}
-                  className="checkbox checkbox-primary checkbox-sm"
-                />
-                <span className="text-sm">{option.label}</span>
-              </label>
+              <div key={option.value} className="form-control">
+                <label className="label cursor-pointer justify-start gap-3 py-1">
+                  <input
+                    type="checkbox"
+                    checked={selectedModels.includes(option.value)}
+                    onChange={() => handleModelToggle(option.value)}
+                    className="checkbox checkbox-sm border-2 border-base-content/60 bg-base-100"
+                  />
+                  <span className="label-text">{option.label}</span>
+                </label>
+              </div>
             ))}
           </div>
         </div>
