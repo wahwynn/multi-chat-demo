@@ -1,7 +1,7 @@
 'use client';
 
 import { Conversation, MODEL_OPTIONS } from '@/lib/types';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -25,6 +25,25 @@ export default function ConversationList({
   const [selectedModels, setSelectedModels] = useState<string[]>(['claude-sonnet-4-5']);  // Changed to array
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<Conversation | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   const handleStartEdit = (conv: Conversation, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -90,20 +109,45 @@ export default function ConversationList({
           <div className="text-sm font-semibold mb-2">
             Select Models ({selectedModels.length})
           </div>
-          <div className="space-y-1">
-            {MODEL_OPTIONS.map((option) => (
-              <div key={option.value} className="form-control">
-                <label className="label cursor-pointer justify-start gap-3 py-1">
-                  <input
-                    type="checkbox"
-                    checked={selectedModels.includes(option.value)}
-                    onChange={() => handleModelToggle(option.value)}
-                    className="checkbox checkbox-sm border-2 border-base-content/60 bg-base-100"
-                  />
-                  <span className="label-text">{option.label}</span>
-                </label>
-              </div>
-            ))}
+          <div className="relative w-full" ref={dropdownRef}>
+            <button
+              type="button"
+              className="btn btn-outline w-full justify-between"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+            >
+              <span className="truncate">
+                {selectedModels.length === 0
+                  ? 'Select models...'
+                  : selectedModels.length === 1
+                  ? MODEL_OPTIONS.find(opt => opt.value === selectedModels[0])?.label
+                  : `${selectedModels.length} models selected`}
+              </span>
+              <svg
+                className={`h-4 w-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {dropdownOpen && (
+              <ul className="absolute left-0 right-0 top-full mt-1 bg-base-100 rounded-box z-50 p-2 shadow-lg border border-base-300">
+                {MODEL_OPTIONS.map((option) => (
+                  <li key={option.value} className="list-none">
+                    <label className="flex items-center cursor-pointer gap-3 py-2 px-2 hover:bg-base-200 rounded-lg">
+                      <input
+                        type="checkbox"
+                        checked={selectedModels.includes(option.value)}
+                        onChange={() => handleModelToggle(option.value)}
+                        className="checkbox checkbox-sm border-2 border-base-content/60 bg-base-100"
+                      />
+                      <span className="label-text">{option.label}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
         <button
