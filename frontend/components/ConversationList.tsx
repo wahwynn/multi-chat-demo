@@ -150,7 +150,7 @@ export default function ConversationList({
                     {conv.selected_models.map(m => MODEL_OPTIONS.find(opt => opt.value === m)?.label || m).join(', ')}
                   </p>
                   <p className="text-sm opacity-60">
-                    {new Date(conv.updated_at).toLocaleDateString()}
+                    {new Date(conv.updated_at).toLocaleString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                   </p>
                 </>
               )}

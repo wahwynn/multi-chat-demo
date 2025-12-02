@@ -55,7 +55,7 @@ export default function ChatWindow({ messages, expectedModelCount }: ChatWindowP
               <p className="whitespace-pre-wrap">{group.user.content}</p>
             </div>
             <div className="chat-footer opacity-60 text-sm mt-1">
-              {new Date(group.user.created_at).toLocaleTimeString()}
+              {new Date(group.user.created_at).toLocaleString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
             </div>
           </div>
 
@@ -70,7 +70,7 @@ export default function ChatWindow({ messages, expectedModelCount }: ChatWindowP
                   </div>
                   <p className="whitespace-pre-wrap text-base leading-relaxed">{response.content}</p>
                   <div className="text-sm opacity-60 mt-2">
-                    {new Date(response.created_at).toLocaleTimeString()}
+                    {new Date(response.created_at).toLocaleString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                   </div>
                 </div>
               </div>
