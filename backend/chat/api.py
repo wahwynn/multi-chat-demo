@@ -77,10 +77,16 @@ async def send_message(request, conversation_id: int, payload: SendMessageSchema
     )
 
     # Get all previous messages for context (only parent messages, not model variants)
-    previous_messages_query = Message.objects.filter(
-        conversation=conversation, parent_message__isnull=True
-    ).values_list("role", "content")
-    previous_messages = await sync_to_async(list)(previous_messages_query)
+    def get_previous_messages():
+        return list(
+            Message.objects.filter(
+                conversation=conversation, parent_message__isnull=True
+            ).values_list("role", "content")
+        )
+
+    previous_messages: List[tuple[str, str]] = await sync_to_async(
+        get_previous_messages
+    )()
 
     # Get responses from all selected models in parallel
     model_responses = await get_multi_model_responses(

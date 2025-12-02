@@ -75,11 +75,11 @@ async def get_multi_model_responses(
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     # Process results and handle exceptions
-    responses = []
+    responses: List[Tuple[str, str]] = []
     for i, result in enumerate(results):
         if isinstance(result, Exception):
             responses.append((models[i], f"Error: {str(result)}"))
-        else:
+        elif isinstance(result, tuple):
             responses.append(result)
 
     return responses

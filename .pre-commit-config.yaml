@@ -1,0 +1,35 @@
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^backend/.*/migrations/
+      - id: end-of-file-fixer
+        exclude: ^backend/.*/migrations/
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: debug-statements
+        exclude: ^backend/.*/migrations/
+
+  # Ruff for linting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        exclude: ^backend/.*/migrations/
+      - id: ruff-format
+        exclude: ^backend/.*/migrations/
+
+  # MyPy for type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [django-stubs]
+        args: [--config-file=mypy.ini]
+        exclude: ^(backend/.*/migrations/|.*/tests\.py$)

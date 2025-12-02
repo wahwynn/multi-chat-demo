@@ -3,4 +3,3 @@ declare module 'daisyui' {
   const daisyui: PluginCreator;
   export default daisyui;
 }
-
