@@ -39,7 +39,7 @@ export default function MessageInput({ onSend, disabled }: MessageInputProps) {
         <button
           onClick={handleSend}
           disabled={!message.trim() || disabled}
-          className="btn btn-primary px-8 text-base"
+          className="btn px-8 text-base font-bold shadow-lg hover:shadow-xl transition-all text-lg bg-blue-600 hover:bg-blue-700 text-white border-none"
         >
           Send
         </button>
