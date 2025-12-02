@@ -23,17 +23,17 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 
 3. **Run migrations:**
    ```bash
-   uv run python manage.py migrate
+   uv run python backend/manage.py migrate
    ```
 
 4. **Create a superuser (optional, for Django admin):**
    ```bash
-   uv run python manage.py createsuperuser
+   uv run python backend/manage.py createsuperuser
    ```
 
 5. **Run the development server:**
    ```bash
-   uv run python manage.py runserver
+   uv run python backend/manage.py runserver
    ```
 
    The backend API will be available at http://localhost:8000/api/
@@ -67,7 +67,7 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 
 1. Start the Django backend in one terminal:
    ```bash
-   uv run python manage.py runserver
+   uv run python backend/manage.py runserver
    ```
 
 2. Start the Next.js frontend in another terminal:
@@ -117,10 +117,10 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 uv run pytest
 
 # Create migrations
-uv run python manage.py makemigrations
+uv run python backend/manage.py makemigrations
 
 # Apply migrations
-uv run python manage.py migrate
+uv run python backend/manage.py migrate
 
 # Access Django admin
 # Visit http://localhost:8000/admin

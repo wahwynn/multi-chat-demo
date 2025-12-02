@@ -46,10 +46,10 @@ cp .env.example .env
 uv sync
 
 # 3. Run migrations
-uv run python manage.py migrate
+uv run python backend/manage.py migrate
 
 # 4. Run the Django server
-uv run python manage.py runserver
+uv run python backend/manage.py runserver
 
 # Frontend setup (in a separate terminal)
 cd frontend
@@ -65,7 +65,7 @@ npm run dev
 - **Framework**: Django 5.2 with Django Ninja for REST API
 - **Database**: SQLite (default, can be changed in settings.py)
 - **API Structure**: All endpoints are prefixed with `/api/` and routed through `backend/urls.py`
-- **Chat App** (`chat/`):
+- **Chat App** (`backend/chat/`):
   - `models.py`: Defines `Conversation` and `Message` models
   - `api.py`: Django Ninja router with REST endpoints for chat operations
   - `chatbot.py`: Handles Anthropic Claude API integration
@@ -112,8 +112,8 @@ npm run dev
 ### Backend Development
 - All Python dependencies must be managed through `uv add` and `uv remove`
 - Use `uv run` to execute Python scripts and tools
-- Run `uv run python manage.py makemigrations` after model changes
-- Run `uv run python manage.py migrate` to apply migrations
+- Run `uv run python backend/manage.py makemigrations` after model changes
+- Run `uv run python backend/manage.py migrate` to apply migrations
 - Access Django admin at http://localhost:8000/admin
 
 ### Frontend Development
@@ -150,4 +150,4 @@ The `.gitignore` is configured for:
 - Node.js modules and build outputs
 - Environment files (.env, .env.local)
 - IDE-specific files (PyCharm, VSCode, Cursor)
-- Database files (db.sqlite3)
+- Database files (backend/db.sqlite3)
