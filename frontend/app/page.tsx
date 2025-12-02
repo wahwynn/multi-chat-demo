@@ -15,8 +15,6 @@ export default function Home() {
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPolling, setIsPolling] = useState(false);
-
   // Load conversations on mount
   useEffect(() => {
     loadConversations();
@@ -30,17 +28,6 @@ export default function Home() {
       setCurrentMessages([]);
     }
   }, [selectedConversationId]);
-
-  // Polling effect for progressive loading
-  useEffect(() => {
-    if (!isPolling || !selectedConversationId) return;
-
-    const interval = setInterval(() => {
-      loadConversation(selectedConversationId);
-    }, 500);  // Poll every 500ms
-
-    return () => clearInterval(interval);
-  }, [isPolling, selectedConversationId]);
 
   const loadConversations = async () => {
     try {
@@ -113,16 +100,10 @@ export default function Home() {
 
         // Send the message to the new conversation
         setIsLoading(true);
-        setIsPolling(true);
         const response = await chatApi.sendMessage(newConv.id, content);
 
-        // Add user message and all assistant messages
-        setCurrentMessages([response.message, ...response.assistant_messages]);
-
-        // Check if we got all expected responses
-        if (response.assistant_messages.length >= newConv.selected_models.length) {
-          setIsPolling(false);
-        }
+        // Reload conversation to get all messages including the new ones
+        await loadConversation(newConv.id);
 
         setIsLoading(false);
 
@@ -132,23 +113,16 @@ export default function Home() {
         setError('Failed to send message');
         console.error(err);
         setIsLoading(false);
-        setIsPolling(false);
       }
       return;
     }
 
     try {
       setIsLoading(true);
-      setIsPolling(true);
       const response = await chatApi.sendMessage(selectedConversationId, content);
 
-      // Add user message and all assistant messages
-      setCurrentMessages([...currentMessages, response.message, ...response.assistant_messages]);
-
-      // Check if we got all expected responses
-      if (response.assistant_messages.length >= currentConversation.selected_models.length) {
-        setIsPolling(false);
-      }
+      // Reload conversation to get all messages including the new ones
+      await loadConversation(selectedConversationId);
 
       setIsLoading(false);
 
@@ -158,7 +132,6 @@ export default function Home() {
       setError('Failed to send message');
       console.error(err);
       setIsLoading(false);
-      setIsPolling(false);
     }
   };
 

@@ -139,3 +139,6 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Anthropic API Key
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+
+# Chat context window size (number of recent messages to include)
+CHAT_CONTEXT_WINDOW_SIZE = int(os.getenv("CHAT_CONTEXT_WINDOW_SIZE", "10"))
