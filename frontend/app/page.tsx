@@ -263,16 +263,14 @@ export default function Home() {
               <span className="loading loading-spinner loading-md"></span>
             )}
             <div className="dropdown dropdown-end">
-              <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar placeholder">
-                {user.avatar_url ? (
-                  <div className="w-10 rounded-full ring ring-purple-500 ring-offset-base-100 ring-offset-1">
-                    <img src={user.avatar_url} alt={user.username} className="rounded-full object-cover" />
-                  </div>
-                ) : (
-                  <div className="w-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                    <span className="text-lg">{user.username.charAt(0).toUpperCase()}</span>
-                  </div>
-                )}
+              <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
+                <div className="w-10 rounded-full ring ring-purple-500 ring-offset-base-100 ring-offset-1">
+                  <img
+                    src={user.avatar_url || '/default-avatar.svg'}
+                    alt={user.username}
+                    className="rounded-full object-cover"
+                  />
+                </div>
               </div>
               <ul tabIndex={0} className="dropdown-content menu menu-sm bg-base-200 rounded-box z-[1] mt-3 w-64 p-2 shadow-lg">
                 <li className="menu-title px-4 py-2">
@@ -284,15 +282,13 @@ export default function Home() {
                 <li className="px-2 py-2">
                   <div className="flex items-center gap-3 w-full">
                     <div className="relative">
-                      {user.avatar_url ? (
-                        <div className="w-12 h-12 rounded-full ring ring-purple-500 ring-offset-base-100 ring-offset-1 overflow-hidden">
-                          <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-white text-xl font-semibold">
-                          {user.username.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      <div className="w-12 h-12 rounded-full ring ring-purple-500 ring-offset-base-100 ring-offset-1 overflow-hidden">
+                        <img
+                          src={user.avatar_url || '/default-avatar.svg'}
+                          alt={user.username}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                       {isUploadingAvatar && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
                           <span className="loading loading-spinner loading-sm text-white"></span>

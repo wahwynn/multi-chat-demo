@@ -52,16 +52,14 @@ export default function ChatWindow({ messages, expectedModelCount, user }: ChatW
         <div key={group.user.id} className="mb-8">
           {/* User message */}
           <div className="chat chat-end mb-4">
-            <div className="chat-image avatar placeholder">
-              {user?.avatar_url ? (
-                <div className="w-10 h-10 rounded-full ring ring-purple-500/50 ring-offset-base-100 ring-offset-1 overflow-hidden">
-                  <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
-                </div>
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-white font-semibold">
-                  {user?.username?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-              )}
+            <div className="chat-image avatar">
+              <div className="w-10 h-10 rounded-full ring ring-purple-500/50 ring-offset-base-100 ring-offset-1 overflow-hidden">
+                <img
+                  src={user?.avatar_url || '/default-avatar.svg'}
+                  alt={user?.username || 'User'}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
             <div className="chat-bubble text-base leading-relaxed min-h-[3rem]">
               <p className="whitespace-pre-wrap">{group.user.content}</p>
