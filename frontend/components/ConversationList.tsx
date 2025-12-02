@@ -170,7 +170,7 @@ export default function ConversationList({
             }`}
             onClick={() => editingId !== conv.id && onSelect(conv.id)}
           >
-            <div className="flex-1 truncate pr-2">
+            <div className="flex-1 min-w-0 pr-2">
               {editingId === conv.id ? (
                 <input
                   type="text"
@@ -193,7 +193,7 @@ export default function ConversationList({
                   <p className="text-sm opacity-70 mb-1">
                     {conv.selected_models.length} model{conv.selected_models.length > 1 ? 's' : ''}
                   </p>
-                  <p className="text-xs opacity-60 mb-1">
+                  <p className="text-xs opacity-60 mb-1 break-words">
                     {conv.selected_models.map(m => MODEL_OPTIONS.find(opt => opt.value === m)?.label || m).join(', ')}
                   </p>
                   <p className="text-sm opacity-60">
