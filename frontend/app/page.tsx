@@ -212,21 +212,6 @@ export default function Home() {
             {isLoading && (
               <span className="loading loading-spinner loading-md"></span>
             )}
-            <label className="flex items-center gap-2 cursor-pointer">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-              <input
-                type="checkbox"
-                checked={theme === 'dark'}
-                onChange={toggleTheme}
-                className="toggle toggle-lg"
-                title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-              />
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
-            </label>
             <div className="dropdown dropdown-end">
               <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar placeholder">
                 <div className="w-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 text-white">
@@ -238,6 +223,30 @@ export default function Home() {
                   <span className="font-semibold">{user.username}</span>
                   <span className="text-xs opacity-70">{user.email}</span>
                 </li>
+                <div className="divider my-1"></div>
+                <li>
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="flex items-center gap-2">
+                      {theme === 'light' ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                      )}
+                      Dark mode
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={theme === 'dark'}
+                      onChange={toggleTheme}
+                      className="toggle toggle-sm"
+                    />
+                  </label>
+                </li>
+                <div className="divider my-1"></div>
                 <li>
                   <button onClick={handleLogout} className="text-error">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
