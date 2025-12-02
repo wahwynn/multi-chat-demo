@@ -18,77 +18,105 @@ from .chatbot import get_multi_model_responses
 router = Router()
 
 
-def get_user_or_none(request: HttpRequest):
-    """Get the current user or None if not authenticated"""
+class AuthenticationRequired(Exception):
+    """Raised when authentication is required but user is not authenticated"""
+
+    pass
+
+
+def get_authenticated_user(request: HttpRequest):
+    """Get the current user or raise AuthenticationRequired if not authenticated"""
     if request.user.is_authenticated:
         return request.user
-    return None
+    raise AuthenticationRequired("Authentication required")
 
 
-@router.get("/conversations", response=List[ConversationListSchema])
+@router.get("/conversations", response={200: List[ConversationListSchema], 401: dict})
 def list_conversations(request: HttpRequest):
     """List all conversations for the current user"""
-    user = get_user_or_none(request)
-    if user:
+    try:
+        user = get_authenticated_user(request)
         conversations = Conversation.objects.filter(user=user)
-    else:
-        # For unauthenticated users, return empty list
-        conversations = Conversation.objects.none()
-    return conversations
+        return 200, list(conversations)
+    except AuthenticationRequired:
+        return 401, {"error": "Authentication required"}
 
 
-@router.post("/conversations", response=ConversationSchema)
+@router.post("/conversations", response={200: ConversationSchema, 400: dict, 401: dict})
 def create_conversation(request: HttpRequest, payload: CreateConversationSchema):
     """Create a new conversation with multiple models"""
+    try:
+        user = get_authenticated_user(request)
+    except AuthenticationRequired:
+        return 401, {"error": "Authentication required"}
+
     # Validate at least 1 model
     if not payload.selected_models:
-        return {"error": "Must select at least 1 model"}
+        return 400, {"error": "Must select at least 1 model"}
 
-    user = get_user_or_none(request)
     conversation = Conversation.objects.create(
         title=payload.title,
         selected_models=payload.selected_models,
         user=user,
     )
-    return conversation
+    return 200, conversation
 
 
-@router.get("/conversations/{conversation_id}", response=ConversationSchema)
+@router.get(
+    "/conversations/{conversation_id}", response={200: ConversationSchema, 401: dict}
+)
 def get_conversation(request: HttpRequest, conversation_id: int):
     """Get a specific conversation with all messages"""
-    user = get_user_or_none(request)
+    try:
+        user = get_authenticated_user(request)
+    except AuthenticationRequired:
+        return 401, {"error": "Authentication required"}
     conversation = get_object_or_404(Conversation, id=conversation_id, user=user)
-    return conversation
+    return 200, conversation
 
 
-@router.patch("/conversations/{conversation_id}", response=ConversationSchema)
+@router.patch(
+    "/conversations/{conversation_id}", response={200: ConversationSchema, 401: dict}
+)
 def update_conversation(
     request: HttpRequest, conversation_id: int, payload: UpdateConversationSchema
 ):
     """Update conversation title"""
-    user = get_user_or_none(request)
+    try:
+        user = get_authenticated_user(request)
+    except AuthenticationRequired:
+        return 401, {"error": "Authentication required"}
     conversation = get_object_or_404(Conversation, id=conversation_id, user=user)
     conversation.title = payload.title
     conversation.save()
-    return conversation
+    return 200, conversation
 
 
-@router.delete("/conversations/{conversation_id}")
+@router.delete("/conversations/{conversation_id}", response={200: dict, 401: dict})
 def delete_conversation(request: HttpRequest, conversation_id: int):
     """Delete a conversation"""
-    user = get_user_or_none(request)
+    try:
+        user = get_authenticated_user(request)
+    except AuthenticationRequired:
+        return 401, {"error": "Authentication required"}
     conversation = get_object_or_404(Conversation, id=conversation_id, user=user)
     conversation.delete()
-    return {"success": True}
+    return 200, {"success": True}
 
 
-@router.post("/conversations/{conversation_id}/messages", response=ChatResponseSchema)
+@router.post(
+    "/conversations/{conversation_id}/messages",
+    response={200: ChatResponseSchema, 401: dict},
+)
 async def send_message(
     request: HttpRequest, conversation_id: int, payload: SendMessageSchema
 ):
     """Send a message and get responses from all selected models"""
     # Get conversation (sync operation) - verify user owns it
-    user = await sync_to_async(get_user_or_none)(request)
+    try:
+        user = await sync_to_async(get_authenticated_user)(request)
+    except AuthenticationRequired:
+        return 401, {"error": "Authentication required"}
     conversation = await sync_to_async(get_object_or_404)(
         Conversation, id=conversation_id, user=user
     )
@@ -150,4 +178,4 @@ async def send_message(
     # Update conversation timestamp
     await sync_to_async(conversation.save)()
 
-    return {"message": user_message, "assistant_messages": assistant_messages}
+    return 200, {"message": user_message, "assistant_messages": assistant_messages}
