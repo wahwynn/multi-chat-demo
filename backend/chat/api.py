@@ -77,8 +77,8 @@ async def send_message(request, conversation_id: int, payload: SendMessageSchema
     )
 
     # Get all previous messages for context (only parent messages, not model variants)
-    previous_messages_query = conversation.messages.filter(
-        parent_message__isnull=True
+    previous_messages_query = Message.objects.filter(
+        conversation=conversation, parent_message__isnull=True
     ).values_list("role", "content")
     previous_messages = await sync_to_async(list)(previous_messages_query)
 
