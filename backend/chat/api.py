@@ -2,7 +2,7 @@ from ninja import Router
 from typing import List
 from django.shortcuts import get_object_or_404
 from django.conf import settings
-from django.http import HttpRequest
+from django.http import HttpRequest, Http404
 from asgiref.sync import sync_to_async
 from .models import Conversation, Message
 from .schemas import (
@@ -71,7 +71,11 @@ def get_conversation(request: HttpRequest, conversation_id: int):
         user = get_authenticated_user(request)
     except AuthenticationRequired:
         return 401, {"error": "Authentication required"}
-    conversation = get_object_or_404(Conversation, id=conversation_id, user=user)
+    # Fetch conversation first, then explicitly verify ownership
+    # This prevents user=None from matching conversations with user IS NULL
+    conversation = get_object_or_404(Conversation, id=conversation_id)
+    if conversation.user != user:
+        raise Http404("Conversation not found")
     return 200, conversation
 
 
@@ -86,7 +90,11 @@ def update_conversation(
         user = get_authenticated_user(request)
     except AuthenticationRequired:
         return 401, {"error": "Authentication required"}
-    conversation = get_object_or_404(Conversation, id=conversation_id, user=user)
+    # Fetch conversation first, then explicitly verify ownership
+    # This prevents user=None from matching conversations with user IS NULL
+    conversation = get_object_or_404(Conversation, id=conversation_id)
+    if conversation.user != user:
+        raise Http404("Conversation not found")
     conversation.title = payload.title
     conversation.save()
     return 200, conversation
@@ -99,7 +107,11 @@ def delete_conversation(request: HttpRequest, conversation_id: int):
         user = get_authenticated_user(request)
     except AuthenticationRequired:
         return 401, {"error": "Authentication required"}
-    conversation = get_object_or_404(Conversation, id=conversation_id, user=user)
+    # Fetch conversation first, then explicitly verify ownership
+    # This prevents user=None from matching conversations with user IS NULL
+    conversation = get_object_or_404(Conversation, id=conversation_id)
+    if conversation.user != user:
+        raise Http404("Conversation not found")
     conversation.delete()
     return 200, {"success": True}
 
@@ -117,9 +129,20 @@ async def send_message(
         user = await sync_to_async(get_authenticated_user)(request)
     except AuthenticationRequired:
         return 401, {"error": "Authentication required"}
-    conversation = await sync_to_async(get_object_or_404)(
-        Conversation, id=conversation_id, user=user
-    )
+
+    # Fetch conversation first with user preloaded, then explicitly verify ownership
+    # This prevents user=None from matching conversations with user IS NULL
+    def get_conversation_with_user():
+        return Conversation.objects.select_related("user").get(id=conversation_id)
+
+    try:
+        conversation = await sync_to_async(get_conversation_with_user)()
+    except Conversation.DoesNotExist:
+        raise Http404("Conversation not found")
+    # Explicitly verify ownership - this comparison is safe in async context
+    # because user is already loaded via select_related
+    if conversation.user != user:
+        raise Http404("Conversation not found")
 
     # Create user message
     user_message = await sync_to_async(Message.objects.create)(
