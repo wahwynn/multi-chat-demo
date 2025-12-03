@@ -3,6 +3,7 @@ omit =
     */migrations/*
     */test_*.py
     */tests.py
+    */conftest.py
     */__pycache__/*
     */venv/*
     */.venv/*
