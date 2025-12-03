@@ -1,6 +1,6 @@
 'use client';
 
-import { Message, MODEL_OPTIONS, User } from '@/lib/types';
+import { Message, MODEL_OPTIONS, User } from '../lib/types';
 import { useEffect, useRef, useMemo } from 'react';
 
 interface ChatWindowProps {
