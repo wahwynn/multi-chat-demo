@@ -20,7 +20,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -62,17 +62,24 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Run tests with coverage
         working-directory: ./frontend
-        run: npm run test:coverage -- --coverageReporters=lcov --coverageReporters=text --coverageReporters=html --coverageReporters=json-summary
+        run: npm run test:coverage -- --ci --coverageReporters=lcov --coverageReporters=text --coverageReporters=html --coverageReporters=json-summary --passWithNoTests
+
+      - name: Verify coverage files exist
+        working-directory: ./frontend
+        run: |
+          ls -la coverage/ || echo "Coverage directory not found"
+          test -f coverage/coverage-summary.json && echo "coverage-summary.json found" || echo "coverage-summary.json NOT found"
+          test -f coverage/lcov.info && echo "lcov.info found" || echo "lcov.info NOT found"
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -80,6 +87,7 @@ jobs:
           name: frontend-coverage
           path: |
             frontend/coverage/
+          if-no-files-found: warn
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -121,20 +129,40 @@ jobs:
             echo "coverage=0" >> $GITHUB_OUTPUT
           fi
 
+      - name: Debug frontend coverage artifact
+        run: |
+          echo "Listing frontend-coverage directory structure:"
+          find frontend-coverage -type f -name "*.json" 2>/dev/null | head -20 || echo "No JSON files found"
+          echo ""
+          echo "Full directory tree:"
+          find frontend-coverage -type f 2>/dev/null | head -30 || echo "No files found"
+
       - name: Parse frontend coverage
         id: frontend-cov
         run: |
+          # Artifacts preserve directory structure, so check multiple possible paths
           COV_FILE=""
-          if [ -f frontend-coverage/coverage-summary.json ]; then
-            COV_FILE="frontend-coverage/coverage-summary.json"
-          elif [ -f frontend-coverage/coverage/coverage-summary.json ]; then
-            COV_FILE="frontend-coverage/coverage/coverage-summary.json"
-          fi
+          for path in "frontend-coverage/frontend/coverage/coverage-summary.json" "frontend-coverage/coverage-summary.json" "frontend-coverage/coverage/coverage-summary.json"; do
+            if [ -f "$path" ]; then
+              COV_FILE="$path"
+              echo "Found coverage file at: $path"
+              break
+            fi
+          done
 
-          if [ -n "$COV_FILE" ]; then
+          if [ -n "$COV_FILE" ] && [ -f "$COV_FILE" ]; then
             COVERAGE=$(python3 -c "import json; data = json.load(open('$COV_FILE')); print(f\"{data['total']['lines']['pct']:.2f}\")")
             echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+            echo "Frontend coverage: ${COVERAGE}%"
           else
+            echo "Warning: coverage-summary.json not found in expected locations" >> $GITHUB_STEP_SUMMARY
+            echo "Searched paths:" >> $GITHUB_STEP_SUMMARY
+            echo "- frontend-coverage/frontend/coverage/coverage-summary.json" >> $GITHUB_STEP_SUMMARY
+            echo "- frontend-coverage/coverage-summary.json" >> $GITHUB_STEP_SUMMARY
+            echo "- frontend-coverage/coverage/coverage-summary.json" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Actual files found:" >> $GITHUB_STEP_SUMMARY
+            find frontend-coverage -type f 2>/dev/null | head -20 >> $GITHUB_STEP_SUMMARY || echo "No files found" >> $GITHUB_STEP_SUMMARY
             echo "coverage=0" >> $GITHUB_OUTPUT
           fi
 
