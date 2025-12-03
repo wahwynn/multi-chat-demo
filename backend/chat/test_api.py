@@ -1,6 +1,6 @@
 import pytest
 from django.contrib.auth.models import User
-from .models import Conversation, Message
+from chat.models import Conversation, Message
 
 
 @pytest.mark.django_db

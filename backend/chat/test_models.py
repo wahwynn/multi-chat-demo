@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from .models import UserProfile, Conversation, Message
+from chat.models import UserProfile, Conversation, Message
 
 
 @pytest.mark.django_db
@@ -44,7 +44,8 @@ class TestUserProfile:
             username="testuser", email="test@example.com", password="testpass123"
         )
         profile = user.profile
-        assert profile.avatar is None or profile.avatar == ""
+        # Django ImageField returns an ImageFieldFile object, check if it has no name
+        assert not profile.avatar.name
 
 
 @pytest.mark.django_db

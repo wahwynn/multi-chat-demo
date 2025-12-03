@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from .chatbot import (
+from chat.chatbot import (
     is_ollama_model,
     get_single_model_response_async,
     get_multi_model_responses,
