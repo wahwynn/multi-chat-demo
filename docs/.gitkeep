@@ -1,0 +1,24 @@
+# GitHub Docs Directory
+
+This directory contains the documentation in GitHub Docs format.
+
+## Structure
+
+- `index.md` - Main user guide (entry point)
+- `quick-start.md` - Quick start guide
+- `faq.md` - Frequently asked questions
+- `screenshot-guide.md` - Screenshot capture instructions
+- `screenshots/` - Documentation screenshots
+- `_config.yml` - GitHub Pages configuration
+
+## GitHub Pages
+
+To enable GitHub Pages for this documentation:
+
+1. Go to repository Settings → Pages
+2. Select source: "Deploy from a branch"
+3. Select branch: `main` (or your default branch)
+4. Select folder: `/docs`
+5. Save
+
+The documentation will be available at: `https://<username>.github.io/<repository>/docs/`

@@ -1,17 +1,132 @@
-# multi-chat-demo
+# Multi-Chat Demo
 
-A full-stack chatbot application with Django Ninja backend and Next.js frontend that allows users to chat with multiple AI models simultaneously.
+A full-stack chatbot application with Django Ninja backend and Next.js frontend that allows users to chat with multiple AI models simultaneously and compare their responses in real-time.
 
 ## Features
 
-- Multi-model chat interface (Claude, Ollama, etc.)
-- User authentication and profiles
-- Conversation management
-- Real-time responses from multiple AI models
+### Core Functionality
+
+- **Multi-model chat interface**: Chat with multiple AI models simultaneously
+  - Claude 4.5 Sonnet, Haiku, and Opus
+  - Ollama models (Llama 3.2, Llama 3.1, Mistral, Phi-3)
+  - Parallel response generation from all selected models
+- **User authentication**: Secure sign up, sign in, and logout
+- **User profiles**:
+  - Avatar upload with image validation and processing
+  - Profile editing (username, email)
+  - Password change functionality
+- **Conversation management**:
+  - Create conversations with custom model selections
+  - Rename conversations
+  - Delete conversations
+  - Conversation history with context window support
+- **Modern UI**:
+  - Dark mode toggle
+  - Responsive design with Tailwind CSS and DaisyUI
+  - Real-time message updates
+  - Loading indicators for async operations
+
+### Technical Features
+
+- Context window management (configurable, default: 10 recent messages)
+- Secure avatar upload with image validation, resizing, and metadata stripping
+- Session-based authentication with CORS support
+- Comprehensive error handling
+
+## Tech Stack
+
+### Backend
+
+- **Framework**: Django 5.2.8 with Django Ninja (REST API)
+- **Language**: Python 3.13+
+- **AI Integration**:
+  - Anthropic Claude API
+  - Ollama API (local or remote)
+- **Database**: SQLite (development)
+- **Package Management**: uv
+- **Key Dependencies**:
+  - django-ninja >= 1.5.0
+  - anthropic >= 0.75.0
+  - httpx >= 0.27.0
+  - pillow >= 11.0.0 (for image processing)
+
+### Frontend
+
+- **Framework**: Next.js 16.0.6
+- **Language**: TypeScript
+- **UI Library**: React 19.2.0
+- **Styling**: Tailwind CSS 3.4.18 with DaisyUI 5.5.5
+- **HTTP Client**: Axios 1.13.2
+- **Testing**: Jest with React Testing Library
 
 ## Quick Start
 
 See [README_SETUP.md](README_SETUP.md) for detailed setup instructions.
+
+### Prerequisites
+
+- Python 3.13+ with `uv` installed
+- Node.js 18+ with npm
+- Anthropic API key (for Claude models)
+- Ollama (optional, for local Ollama models)
+
+### Quick Setup
+
+1. **Backend Setup**:
+
+   ```bash
+   # Install dependencies
+   uv sync
+
+   # Set up environment variables
+   # Create .env file with ANTHROPIC_API_KEY
+
+   # Run migrations
+   uv run python backend/manage.py migrate
+
+   # Start server
+   uv run python backend/manage.py runserver
+   ```
+
+2. **Frontend Setup**:
+
+   ```bash
+   cd frontend
+   npm install --legacy-peer-deps
+   npm run dev
+   ```
+
+3. **Access the application**: http://localhost:3000
+
+## User Guide
+
+📖 **Need help using the application?** Check out the comprehensive [Documentation](docs/) with step-by-step guides, screenshots, and FAQs.
+
+- [Quick Start Guide](docs/quick-start.md) - Get started in minutes
+- [Full User Guide](docs/index.md) - Complete documentation with screenshots
+- [FAQ](docs/faq.md) - Frequently asked questions
+
+## API Endpoints
+
+### Authentication (`/api/auth/`)
+
+- `GET /me` - Get current user info
+- `POST /login` - Sign in
+- `POST /logout` - Sign out
+- `POST /register` - Create account
+- `PATCH /profile` - Update profile
+- `POST /change-password` - Change password
+- `POST /avatar` - Upload avatar
+- `DELETE /avatar` - Delete avatar
+
+### Chat (`/api/chat/`)
+
+- `GET /conversations` - List all conversations
+- `POST /conversations` - Create new conversation
+- `GET /conversations/{id}` - Get conversation with messages
+- `PATCH /conversations/{id}` - Update conversation title
+- `DELETE /conversations/{id}` - Delete conversation
+- `POST /conversations/{id}/messages` - Send message and get responses
 
 ## Testing
 
@@ -19,27 +134,233 @@ The project includes comprehensive test suites for both backend and frontend.
 
 ### Backend Tests
 
-Run backend tests:
+Run all backend tests:
+
 ```bash
 uv run pytest
 ```
 
+Run with coverage:
+
+```bash
+uv run pytest --cov=chat --cov-report=html
+```
+
+Run specific test files:
+
+```bash
+uv run pytest backend/chat/test_models.py
+uv run pytest backend/chat/test_api.py
+uv run pytest backend/chat/test_auth_api.py
+uv run pytest backend/chat/test_chatbot.py
+```
+
 ### Frontend Tests
 
-Run frontend tests:
+Run all frontend tests:
+
 ```bash
 cd frontend
 npm test
 ```
 
+Run with coverage:
+
+```bash
+npm run test:coverage
+```
+
+Run in watch mode:
+
+```bash
+npm run test:watch
+```
+
 See [TESTING.md](TESTING.md) for detailed testing documentation.
+
+## Automated Screenshot Capture
+
+The project includes an automated screenshot capture script that uses Playwright to generate screenshots for the help documentation.
+
+### Prerequisites
+
+- Playwright installed (included in frontend dependencies)
+- Application running at `http://localhost:3000`
+- Backend API running at `http://localhost:8000`
+
+### Running the Screenshot Script
+
+1. **Start the application** (if not already running):
+
+   ```bash
+   # Terminal 1: Start backend
+   uv run python backend/manage.py runserver
+
+   # Terminal 2: Start frontend
+   cd frontend
+   npm run dev
+   ```
+
+2. **Run the screenshot script**:
+
+   ```bash
+   node docs/makedocs/capture-screenshots.js
+   ```
+
+   Or from the project root:
+
+   ```bash
+   node docs/makedocs/capture-screenshots.js
+   ```
+
+3. **Screenshots will be saved** to `docs/screenshots/` directory:
+   - `01-welcome-screen.png`
+   - `02-sign-up.png`
+   - `03-sign-in.png`
+   - `04-new-conversation.png`
+   - `05-model-selection.png`
+   - `06-rename-conversation.png`
+   - `07-delete-conversation.png`
+   - `08-message-input.png`
+   - `09-chat-responses.png`
+   - `10-multi-model-responses.png`
+   - `11-profile-menu.png`
+   - `12-edit-profile.png`
+   - `13-change-password.png`
+   - `14-avatar-upload.png`
+   - `15-dark-mode.png`
+   - `16-sign-out.png`
+
+### How It Works
+
+The script:
+
+- Automatically creates a test user if one doesn't exist
+- Navigates through the application UI
+- Captures screenshots at key interaction points
+- Saves all screenshots to the `docs/screenshots/` directory
+
+### Manual Screenshot Capture
+
+For manual screenshot capture, see [docs/makedocs/screenshot-guide.md](docs/makedocs/screenshot-guide.md) for detailed instructions and best practices.
 
 ## Project Structure
 
-- `backend/`: Django backend with Django Ninja API
-- `frontend/`: Next.js frontend with React and TypeScript
-- `backend/chat/tests.py`: Backend test files
-- `frontend/components/__tests__/`: Frontend component tests
+```
+multi-chat-demo/
+├── backend/                 # Django backend
+│   ├── chat/               # Main chat application
+│   │   ├── models.py       # Database models (UserProfile, Conversation, Message)
+│   │   ├── api.py          # Chat API endpoints
+│   │   ├── auth_api.py     # Authentication API endpoints
+│   │   ├── chatbot.py      # AI model integration (Claude, Ollama)
+│   │   ├── schemas.py      # API schemas
+│   │   └── test_*.py       # Test files
+│   ├── config/             # Django configuration
+│   │   ├── settings.py     # Django settings
+│   │   └── urls.py         # URL routing
+│   └── manage.py           # Django management script
+├── frontend/               # Next.js frontend
+│   ├── app/                # Next.js app directory
+│   │   ├── page.tsx        # Main page component
+│   │   └── layout.tsx      # Root layout
+│   ├── components/         # React components
+│   │   ├── AuthPage.tsx    # Authentication UI
+│   │   ├── ChatWindow.tsx  # Chat display component
+│   │   ├── ConversationList.tsx  # Conversation sidebar
+│   │   ├── MessageInput.tsx      # Message input component
+│   │   └── ThemeProvider.tsx     # Theme context
+│   ├── lib/                # Utility libraries
+│   │   ├── api.ts          # API client functions
+│   │   └── types.ts        # TypeScript type definitions
+│   └── components/__tests__/  # Component tests
+├── docs/                   # User documentation (GitHub Docs format)
+│   ├── index.md            # Main user guide
+│   ├── quick-start.md      # Quick start guide
+│   ├── faq.md              # Frequently asked questions
+│   └── build/              # Build tools and guides
+│       ├── capture-screenshots.js
+│       ├── create-placeholders.html
+│       └── screenshot-guide.md
+│   └── screenshots/        # Documentation screenshots
+├── pyproject.toml          # Python project configuration
+├── README_SETUP.md         # Detailed setup instructions
+└── TESTING.md              # Testing documentation
+```
+
+## Development
+
+### Backend Commands
+
+```bash
+# Run development server
+uv run python backend/manage.py runserver
+
+# Create migrations
+uv run python backend/manage.py makemigrations
+
+# Apply migrations
+uv run python backend/manage.py migrate
+
+# Create superuser
+uv run python backend/manage.py createsuperuser
+
+# Run tests
+uv run pytest
+
+# Type checking
+uv run mypy backend/
+```
+
+### Frontend Commands
+
+```bash
+cd frontend
+
+# Development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Run production build
+npm start
+
+# Lint code
+npm run lint
+
+# Run tests
+npm test
+```
+
+## Environment Variables
+
+### Backend (.env)
+
+- `ANTHROPIC_API_KEY` - Your Anthropic API key (required for Claude models)
+- `OLLAMA_BASE_URL` - Ollama API base URL (default: http://localhost:11434)
+- `CHAT_CONTEXT_WINDOW_SIZE` - Number of recent messages to include in context (default: 10)
+
+### Frontend (.env.local)
+
+- `NEXT_PUBLIC_API_URL` - Backend API URL (default: http://localhost:8000/api)
+
+## Supported AI Models
+
+### Claude Models (via Anthropic API)
+
+- `claude-sonnet-4-5` - Claude 4.5 Sonnet
+- `claude-haiku-4-5` - Claude 4.5 Haiku
+- `claude-opus-4-5` - Claude 4.5 Opus
+
+### Ollama Models (via Ollama API)
+
+- `ollama-llama3.2` - Llama 3.2
+- `ollama-llama3.1` - Llama 3.1
+- `ollama-mistral` - Mistral
+- `ollama-phi3` - Phi-3
+
+**Note**: Ollama models require a running Ollama instance. Install from [ollama.ai](https://ollama.ai) and ensure the models are pulled locally.
 
 ## License
 

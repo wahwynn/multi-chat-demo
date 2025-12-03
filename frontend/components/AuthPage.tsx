@@ -102,6 +102,7 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                data-testid="username-input"
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
                 placeholder="Enter your username"
                 required
@@ -117,6 +118,7 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  data-testid="email-input"
                   className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
                   placeholder="you@example.com"
                   required
@@ -132,6 +134,7 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                data-testid="password-input"
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
                 placeholder="••••••••"
                 required
@@ -157,6 +160,7 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
             <button
               type="submit"
               disabled={isLoading}
+              data-testid={isLogin ? 'sign-in-button' : 'create-account-button'}
               className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold shadow-lg shadow-purple-500/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isLoading ? (

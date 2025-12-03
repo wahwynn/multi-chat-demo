@@ -112,6 +112,7 @@ export default function ConversationList({
           <div className="relative w-full" ref={dropdownRef}>
             <button
               type="button"
+              data-testid="select-models-button"
               className="btn btn-outline w-full justify-between"
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
@@ -140,6 +141,7 @@ export default function ConversationList({
                         type="checkbox"
                         checked={selectedModels.includes(option.value)}
                         onChange={() => handleModelToggle(option.value)}
+                        data-testid={`model-checkbox-${option.value}`}
                         className="checkbox checkbox-sm border-2 border-base-content/60 bg-base-100"
                       />
                       <span className="label-text">{option.label}</span>
@@ -152,12 +154,8 @@ export default function ConversationList({
         </div>
         <button
           onClick={() => onNew(selectedModels)}
-<<<<<<< Updated upstream
-          className="btn w-full text-base font-bold shadow-lg hover:shadow-xl transition-all py-3 text-lg bg-blue-600 hover:bg-blue-700 text-white border-none"
-=======
           data-testid="new-chat-button"
           className="btn btn-primary w-full text-base font-bold shadow-lg hover:shadow-xl transition-all py-3 text-lg"
->>>>>>> Stashed changes
           disabled={selectedModels.length === 0}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -183,6 +181,7 @@ export default function ConversationList({
                   onChange={(e) => setEditTitle(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, conv.id)}
                   onBlur={() => handleSaveEdit(conv.id)}
+                  data-testid="conversation-title-input"
                   className="input input-bordered input-sm w-full text-base"
                   autoFocus
                   onClick={(e) => e.stopPropagation()}
@@ -211,6 +210,7 @@ export default function ConversationList({
               {editingId !== conv.id && (
                 <button
                   onClick={(e) => handleStartEdit(conv, e)}
+                  data-testid="edit-conversation-button"
                   className="btn btn-ghost btn-sm text-base"
                   title="Rename"
                 >
@@ -219,7 +219,8 @@ export default function ConversationList({
               )}
               <button
                 onClick={(e) => handleOpenDeleteModal(conv, e)}
-                className="btn btn-ghost btn-sm text-error text-xl"
+                data-testid="delete-conversation-button"
+                className="btn btn-ghost btn-sm text-xl"
                 title="Delete"
               >
                 ×
@@ -237,17 +238,10 @@ export default function ConversationList({
             Are you sure you want to delete <span className="font-semibold">&quot;{conversationToDelete?.title}&quot;</span>? This action cannot be undone.
           </p>
           <div className="modal-action">
-<<<<<<< Updated upstream
-            <button onClick={handleCancelDelete} className="btn btn-lg">
-              Cancel
-            </button>
-            <button onClick={handleConfirmDelete} className="btn btn-error btn-lg">
-=======
             <button onClick={handleCancelDelete} data-testid="cancel-delete-button" className="btn btn-lg px-6">
               Cancel
             </button>
-            <button onClick={handleConfirmDelete} data-testid="confirm-delete-button" className="btn btn-lg bg-red-600 hover:bg-red-700 text-white border-none px-6">
->>>>>>> Stashed changes
+            <button onClick={handleConfirmDelete} data-testid="confirm-delete-button" className="btn btn-error btn-lg px-6">
               Delete
             </button>
           </div>

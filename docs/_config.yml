@@ -1,0 +1,34 @@
+# GitHub Pages Configuration
+# This file configures GitHub Pages for the documentation
+
+title: Multi-Chat Demo Documentation
+description: User guide and documentation for Multi-Chat Demo
+theme: jekyll-theme-tactile
+
+# Enable plugins
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# Site settings
+markdown: kramdown
+highlighter: rouge
+
+# Navigation
+navigation:
+  - title: Getting Started
+    url: /docs/
+  - title: Quick Start
+    url: /docs/quick-start.html
+  - title: FAQ
+    url: /docs/faq.html
+
+# Exclude files from processing
+exclude:
+  - makedocs/
+  - summary.md
+  - index-navigation.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor

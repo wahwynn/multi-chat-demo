@@ -39,12 +39,8 @@ export default function MessageInput({ onSend, disabled }: MessageInputProps) {
         <button
           onClick={handleSend}
           disabled={!message.trim() || disabled}
-<<<<<<< Updated upstream
-          className="btn px-8 text-base font-bold shadow-lg hover:shadow-xl transition-all text-lg bg-blue-600 hover:bg-blue-700 text-white border-none"
-=======
           data-testid="send-message-button"
           className="btn btn-primary px-8 text-base font-bold shadow-lg hover:shadow-xl transition-all text-lg"
->>>>>>> Stashed changes
         >
           Send
         </button>

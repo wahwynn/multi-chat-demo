@@ -341,7 +341,7 @@ export default function Home() {
               <span className="loading loading-spinner loading-md"></span>
             )}
             <div className="dropdown dropdown-end">
-              <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
+              <div tabIndex={0} role="button" data-testid="avatar-button" className="btn btn-circle avatar">
                 <div className="w-10 rounded-full ring ring-purple-500 ring-offset-base-100 ring-offset-1">
                   <img
                     src={user.avatar_url || '/default-avatar.svg'}
@@ -357,7 +357,7 @@ export default function Home() {
                 </li>
                 <div className="divider my-1"></div>
                 <li>
-                  <button onClick={handleOpenEditProfile} className="flex items-center gap-2">
+                  <button onClick={handleOpenEditProfile} data-testid="edit-profile-button" className="flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -386,6 +386,7 @@ export default function Home() {
                       <button
                         onClick={handleAvatarClick}
                         disabled={isUploadingAvatar}
+                        data-testid="upload-avatar-button"
                         className="btn btn-xs btn-primary"
                       >
                         {user.avatar_url ? 'Change' : 'Upload'} photo
@@ -428,13 +429,14 @@ export default function Home() {
                       type="checkbox"
                       checked={theme === 'dark'}
                       onChange={toggleTheme}
+                      data-testid="dark-mode-toggle"
                       className="toggle toggle-sm"
                     />
                   </label>
                 </li>
                 <div className="divider my-1"></div>
                 <li>
-                  <button onClick={handleLogout} className="text-error">
+                  <button onClick={handleLogout} data-testid="sign-out-button" className="text-error">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
@@ -495,12 +497,8 @@ export default function Home() {
                   </button>
                   <button
                     type="submit"
-<<<<<<< Updated upstream
-                    className="btn btn-primary"
-=======
                     data-testid="save-profile-button"
                     className="btn btn-primary px-6"
->>>>>>> Stashed changes
                     disabled={isUpdatingProfile || isUpdatingPassword}
                   >
                     {isUpdatingProfile ? (
@@ -522,7 +520,8 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => setIsChangingPassword(!isChangingPassword)}
-                  className="btn btn-sm btn-ghost mb-2"
+                  data-testid="change-password-button"
+                  className="btn btn-sm btn-ghost mb-2 px-6"
                 >
                   {isChangingPassword ? (
                     <>
@@ -584,12 +583,8 @@ export default function Home() {
                     </div>
                     <button
                       type="submit"
-<<<<<<< Updated upstream
-                      className="btn btn-sm btn-primary w-full"
-=======
                       data-testid="submit-change-password-button"
                       className="btn btn-sm btn-primary w-full px-6"
->>>>>>> Stashed changes
                       disabled={isUpdatingPassword || isUpdatingProfile}
                     >
                       {isUpdatingPassword ? (
