@@ -20,6 +20,15 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editUsername, setEditUsername] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Check authentication status on mount
   useEffect(() => {
@@ -107,6 +116,75 @@ export default function Home() {
     } catch (err) {
       console.error('Avatar delete failed:', err);
       setError('Failed to delete avatar. Please try again.');
+    }
+  };
+
+  const handleOpenEditProfile = () => {
+    if (user) {
+      setEditUsername(user.username);
+      setEditEmail(user.email);
+      setIsEditingProfile(true);
+      setError(null);
+    }
+  };
+
+  const handleCloseEditProfile = () => {
+    setIsEditingProfile(false);
+    setEditUsername('');
+    setEditEmail('');
+    setIsChangingPassword(false);
+    setOldPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setError(null);
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setIsUpdatingProfile(true);
+    setError(null);
+
+    try {
+      const updatedUser = await authApi.updateProfile(editUsername, editEmail);
+      setUser(updatedUser);
+      setIsEditingProfile(false);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || 'Failed to update profile. Please try again.');
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) return;
+
+    // Validate passwords match
+    if (newPassword !== confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    setError(null);
+
+    try {
+      await authApi.changePassword(oldPassword, newPassword);
+      setIsChangingPassword(false);
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      // Show success message - we can use a temporary success state or just clear error
+      setError(null);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || 'Failed to change password. Please try again.');
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -278,6 +356,15 @@ export default function Home() {
                   <span className="text-xs opacity-70">{user.email}</span>
                 </li>
                 <div className="divider my-1"></div>
+                <li>
+                  <button onClick={handleOpenEditProfile} className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit profile
+                  </button>
+                </li>
+                <div className="divider my-1"></div>
                 {/* Avatar section */}
                 <li className="px-2 py-2">
                   <div className="flex items-center gap-3 w-full">
@@ -363,6 +450,155 @@ export default function Home() {
             <span>{error}</span>
           </div>
         )}
+
+        {/* Edit Profile Modal */}
+        {isEditingProfile && (
+          <div className="modal modal-open">
+            <div className="modal-box">
+              <h3 className="font-bold text-lg mb-4">Edit Profile</h3>
+
+              {/* Profile Update Form */}
+              <form onSubmit={handleUpdateProfile} className="space-y-4">
+                <div>
+                  <label className="label">
+                    <span className="label-text">Username</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={editUsername}
+                    onChange={(e) => setEditUsername(e.target.value)}
+                    className="input input-bordered w-full"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="label">
+                    <span className="label-text">Email</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    className="input input-bordered w-full"
+                    required
+                  />
+                </div>
+
+                <div className="modal-action">
+                  <button
+                    type="button"
+                    onClick={handleCloseEditProfile}
+                    className="btn btn-ghost"
+                    disabled={isUpdatingProfile || isUpdatingPassword}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={isUpdatingProfile || isUpdatingPassword}
+                  >
+                    {isUpdatingProfile ? (
+                      <>
+                        <span className="loading loading-spinner loading-sm"></span>
+                        Updating...
+                      </>
+                    ) : (
+                      'Save changes'
+                    )}
+                  </button>
+                </div>
+              </form>
+
+              <div className="divider my-4"></div>
+
+              {/* Password Change Section */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setIsChangingPassword(!isChangingPassword)}
+                  className="btn btn-sm btn-ghost mb-2"
+                >
+                  {isChangingPassword ? (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      </svg>
+                      Hide password change
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      Change password
+                    </>
+                  )}
+                </button>
+
+                {isChangingPassword && (
+                  <form onSubmit={handleChangePassword} className="space-y-3 mt-3">
+                    <div>
+                      <label className="label">
+                        <span className="label-text">Current Password</span>
+                      </label>
+                      <input
+                        type="password"
+                        value={oldPassword}
+                        onChange={(e) => setOldPassword(e.target.value)}
+                        className="input input-bordered w-full"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="label">
+                        <span className="label-text">New Password</span>
+                      </label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="input input-bordered w-full"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    <div>
+                      <label className="label">
+                        <span className="label-text">Confirm New Password</span>
+                      </label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="input input-bordered w-full"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="btn btn-sm btn-primary w-full"
+                      disabled={isUpdatingPassword || isUpdatingProfile}
+                    >
+                      {isUpdatingPassword ? (
+                        <>
+                          <span className="loading loading-spinner loading-sm"></span>
+                          Changing...
+                        </>
+                      ) : (
+                        'Change Password'
+                      )}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+            <div className="modal-backdrop" onClick={handleCloseEditProfile}></div>
+          </div>
+        )}
+
         <ChatWindow
           messages={currentMessages}
           expectedModelCount={

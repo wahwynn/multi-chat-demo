@@ -147,6 +147,16 @@ class RegisterSchema(Schema):
     password: str
 
 
+class UpdateProfileSchema(Schema):
+    username: Optional[str] = None
+    email: Optional[str] = None
+
+
+class ChangePasswordSchema(Schema):
+    old_password: str
+    new_password: str
+
+
 class UserSchema(Schema):
     id: int
     username: str
@@ -312,3 +322,85 @@ def delete_avatar(request: HttpRequest):
         "email": user.email,
         "avatar_url": None,
     }
+
+
+@router.patch(
+    "/profile",
+    response={200: UserSchema, 400: ErrorResponseSchema, 401: ErrorResponseSchema},
+)
+def update_profile(request: HttpRequest, payload: UpdateProfileSchema):
+    """Update user profile (username and/or email)"""
+    if not request.user.is_authenticated:
+        return 401, {"error": "Authentication required"}
+
+    user = cast(User, request.user)
+    errors = []
+
+    # Update username if provided
+    if payload.username is not None:
+        if payload.username != user.username:
+            # Check if username already exists
+            if (
+                User.objects.filter(username=payload.username)
+                .exclude(pk=user.pk)
+                .exists()
+            ):
+                errors.append("Username already exists")
+            else:
+                user.username = payload.username
+
+    # Update email if provided
+    if payload.email is not None:
+        if payload.email != user.email:
+            # Check if email already exists
+            if User.objects.filter(email=payload.email).exclude(pk=user.pk).exists():
+                errors.append("Email already exists")
+            else:
+                user.email = payload.email
+
+    if errors:
+        return 400, {"error": "; ".join(errors)}
+
+    # Save changes
+    user.save()
+
+    return 200, {
+        "id": user.pk,
+        "username": user.username,
+        "email": user.email,
+        "avatar_url": get_avatar_url(request, user),
+    }
+
+
+@router.post(
+    "/change-password",
+    response={
+        200: MessageResponseSchema,
+        400: ErrorResponseSchema,
+        401: ErrorResponseSchema,
+    },
+)
+def change_password(request: HttpRequest, payload: ChangePasswordSchema):
+    """Change user password"""
+    if not request.user.is_authenticated:
+        return 401, {"error": "Authentication required"}
+
+    user = cast(User, request.user)
+
+    # Verify old password
+    if not user.check_password(payload.old_password):
+        return 400, {"error": "Current password is incorrect"}
+
+    # Validate new password length
+    if len(payload.new_password) < 6:
+        return 400, {"error": "New password must be at least 6 characters"}
+
+    # Check if new password is the same as old password
+    if user.check_password(payload.new_password):
+        return 400, {"error": "New password must be different from current password"}
+
+    # Set new password
+    user.set_password(payload.new_password)
+    user.save()
+
+    return 200, {"message": "Password changed successfully"}
