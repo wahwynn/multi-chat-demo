@@ -6,7 +6,7 @@ import ChatWindow from '@/components/ChatWindow';
 import MessageInput from '@/components/MessageInput';
 import AuthPage from '@/components/AuthPage';
 import { chatApi, authApi } from '@/lib/api';
-import { Conversation, Message, User } from '../lib/types';
+import { Conversation, Message, User } from '@/lib/types';
 import { useTheme } from '@/components/ThemeProvider';
 
 export default function Home() {

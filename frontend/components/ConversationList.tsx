@@ -1,6 +1,6 @@
 'use client';
 
-import { Conversation, MODEL_OPTIONS } from '../lib/types';
+import { Conversation, MODEL_OPTIONS } from '@/lib/types';
 import { useState, useRef, useEffect } from 'react';
 
 interface ConversationListProps {

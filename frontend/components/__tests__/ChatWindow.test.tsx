@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import ChatWindow from '../ChatWindow'
-import { Message, User } from '../../lib/types'
+import { Message, User } from '@/lib/types'
 
 const mockUser: User = {
   id: 1,
