@@ -53,8 +53,10 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 
 3. **Install dependencies:**
    ```bash
-   npm install
+   npm install --legacy-peer-deps
    ```
+
+   Note: The `--legacy-peer-deps` flag is required due to a peer dependency conflict between React 19 and some testing libraries that expect React 18. This is safe to use and will not affect functionality.
 
 4. **Run the development server:**
    ```bash
