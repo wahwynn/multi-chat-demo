@@ -72,7 +72,7 @@ jobs:
 
       - name: Run tests with coverage
         working-directory: ./frontend
-        run: npm run test:coverage -- --ci --coverageReporters=lcov --coverageReporters=text --coverageReporters=html --coverageReporters=json-summary --passWithNoTests
+        run: npm run test:coverage -- --ci --passWithNoTests
 
       - name: Verify coverage files exist
         working-directory: ./frontend
