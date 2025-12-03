@@ -9,39 +9,61 @@ from chat.models import UserProfile, Conversation, Message
 class TestUserProfile:
     """Tests for UserProfile model"""
 
-    def test_user_profile_created_automatically(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, request):
+        """Setup unique identifiers for each test"""
+        import uuid
+
+        self.test_id = str(uuid.uuid4())[:8]
+        yield
+        # Cleanup: delete any users created in this test
+        User.objects.filter(username__startswith=f"testuser_{self.test_id}").delete()
+
+    def test_user_profile_created_automatically(self, setup):
         """Test that UserProfile is created automatically when User is created"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         assert UserProfile.objects.filter(user=user).exists()
         assert user.profile is not None
 
-    def test_user_profile_one_to_one_relationship(self):
+    def test_user_profile_one_to_one_relationship(self, setup):
         """Test that UserProfile has one-to-one relationship with User"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         profile = user.profile
         assert profile is not None
         assert profile.user == user
 
         # Try to create another profile for the same user (should fail)
-        with pytest.raises(IntegrityError):
-            UserProfile.objects.create(user=user)
+        from django.db import transaction
 
-    def test_user_profile_str_representation(self):
+        with pytest.raises(IntegrityError):
+            with transaction.atomic():
+                UserProfile.objects.create(user=user)
+
+    def test_user_profile_str_representation(self, setup):
         """Test UserProfile string representation"""
+        username = f"testuser_{self.test_id}"
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=username,
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         profile = user.profile
-        assert str(profile) == "testuser's profile"
+        assert str(profile) == f"{username}'s profile"
 
-    def test_user_profile_avatar_field(self):
+    def test_user_profile_avatar_field(self, setup):
         """Test that avatar field is optional"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         profile = user.profile
         # Django ImageField returns an ImageFieldFile object, check if it has no name
@@ -52,10 +74,22 @@ class TestUserProfile:
 class TestConversation:
     """Tests for Conversation model"""
 
-    def test_create_conversation_with_valid_models(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, request):
+        """Setup unique identifiers for each test"""
+        import uuid
+
+        self.test_id = str(uuid.uuid4())[:8]
+        yield
+        # Cleanup: delete any users created in this test
+        User.objects.filter(username__startswith=f"testuser_{self.test_id}").delete()
+
+    def test_create_conversation_with_valid_models(self, setup):
         """Test creating a conversation with valid models"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         conversation = Conversation.objects.create(
             title="Test Chat",
@@ -66,30 +100,36 @@ class TestConversation:
         assert conversation.selected_models == ["claude-sonnet-4-5", "claude-haiku-4-5"]
         assert conversation.user == user
 
-    def test_conversation_default_title(self):
+    def test_conversation_default_title(self, setup):
         """Test that conversation has default title"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         conversation = Conversation.objects.create(
             selected_models=["claude-sonnet-4-5"], user=user
         )
         assert conversation.title == "New Chat"
 
-    def test_conversation_validation_empty_models(self):
+    def test_conversation_validation_empty_models(self, setup):
         """Test that conversation must have at least one model"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         conversation = Conversation(title="Test", selected_models=[], user=user)
         with pytest.raises(ValidationError) as exc_info:
             conversation.full_clean()
         assert "Must select at least 1 model" in str(exc_info.value)
 
-    def test_conversation_validation_invalid_model(self):
+    def test_conversation_validation_invalid_model(self, setup):
         """Test that conversation rejects invalid model IDs"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         conversation = Conversation(
             title="Test",
@@ -100,10 +140,12 @@ class TestConversation:
             conversation.full_clean()
         assert "Invalid model" in str(exc_info.value)
 
-    def test_conversation_validation_non_list_models(self):
+    def test_conversation_validation_non_list_models(self, setup):
         """Test that selected_models must be a list"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         conversation = Conversation(
             title="Test", selected_models="not-a-list", user=user
@@ -112,10 +154,12 @@ class TestConversation:
             conversation.full_clean()
         assert "Models must be a list" in str(exc_info.value)
 
-    def test_conversation_all_valid_models(self):
+    def test_conversation_all_valid_models(self, setup):
         """Test that all valid model choices work"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         valid_models = [
             "claude-sonnet-4-5",
@@ -134,10 +178,12 @@ class TestConversation:
             )
             assert conversation.selected_models == [model]
 
-    def test_conversation_ordering(self):
+    def test_conversation_ordering(self, setup):
         """Test that conversations are ordered by updated_at descending"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         conv1 = Conversation.objects.create(
             title="First", selected_models=["claude-sonnet-4-5"], user=user
@@ -154,10 +200,12 @@ class TestConversation:
         assert conversations[1] == conv2
         assert conversations[2] == conv1
 
-    def test_conversation_str_representation(self):
+    def test_conversation_str_representation(self, setup):
         """Test Conversation string representation"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         conversation = Conversation.objects.create(
             title="Test Chat",
@@ -180,10 +228,22 @@ class TestConversation:
 class TestMessage:
     """Tests for Message model"""
 
-    def test_create_user_message(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, request):
+        """Setup unique identifiers for each test"""
+        import uuid
+
+        self.test_id = str(uuid.uuid4())[:8]
+        yield
+        # Cleanup: delete any users created in this test
+        User.objects.filter(username__startswith=f"testuser_{self.test_id}").delete()
+
+    def test_create_user_message(self, setup):
         """Test creating a user message"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         conversation = Conversation.objects.create(
             title="Test", selected_models=["claude-sonnet-4-5"], user=user
@@ -196,10 +256,12 @@ class TestMessage:
         assert message.conversation == conversation
         assert message.model is None
 
-    def test_create_assistant_message(self):
+    def test_create_assistant_message(self, setup):
         """Test creating an assistant message"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         conversation = Conversation.objects.create(
             title="Test", selected_models=["claude-sonnet-4-5"], user=user
@@ -219,10 +281,12 @@ class TestMessage:
         assert assistant_message.model == "claude-sonnet-4-5"
         assert assistant_message.parent_message == user_message
 
-    def test_message_ordering(self):
+    def test_message_ordering(self, setup):
         """Test that messages are ordered by created_at ascending"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         conversation = Conversation.objects.create(
             title="Test", selected_models=["claude-sonnet-4-5"], user=user
@@ -242,10 +306,12 @@ class TestMessage:
         assert messages[1] == msg2
         assert messages[2] == msg3
 
-    def test_message_str_representation(self):
+    def test_message_str_representation(self, setup):
         """Test Message string representation"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         conversation = Conversation.objects.create(
             title="Test", selected_models=["claude-sonnet-4-5"], user=user
@@ -259,10 +325,12 @@ class TestMessage:
         assert "user:" in str_repr.lower()
         assert len(str_repr) < len(message.content) + 10  # Should be truncated
 
-    def test_message_cascade_delete(self):
+    def test_message_cascade_delete(self, setup):
         """Test that messages are deleted when conversation is deleted"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         conversation = Conversation.objects.create(
             title="Test", selected_models=["claude-sonnet-4-5"], user=user
@@ -274,10 +342,12 @@ class TestMessage:
         conversation.delete()
         assert not Message.objects.filter(id=message_id).exists()
 
-    def test_message_parent_cascade_delete(self):
+    def test_message_parent_cascade_delete(self, setup):
         """Test that parent message deletion cascades to child messages"""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=f"testuser_{self.test_id}",
+            email=f"test_{self.test_id}@example.com",
+            password="testpass123",
         )
         conversation = Conversation.objects.create(
             title="Test", selected_models=["claude-sonnet-4-5"], user=user

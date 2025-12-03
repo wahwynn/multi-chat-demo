@@ -213,3 +213,19 @@ class TestChatbotAPI:
         """Test multi-model responses with empty model list"""
         results = await get_multi_model_responses(sample_messages, [], "dummy-key")
         assert results == []
+
+    async def test_get_multi_model_responses_exception_handling(self, sample_messages):
+        """Test exception handling in get_multi_model_responses when gather returns exceptions"""
+        # Mock get_single_model_response_async to raise an exception
+        with patch("chat.chatbot.get_single_model_response_async") as mock_single:
+            # Make it raise an exception
+            mock_single.side_effect = Exception("Test error")
+
+            results = await get_multi_model_responses(
+                sample_messages, ["claude-sonnet-4-5"], "dummy-key"
+            )
+
+            # Should handle the exception gracefully
+            assert len(results) == 1
+            assert results[0][0] == "claude-sonnet-4-5"
+            assert "Error" in results[0][1]
