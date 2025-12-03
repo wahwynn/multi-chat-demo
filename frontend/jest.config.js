@@ -1,5 +1,4 @@
 const nextJest = require('next/jest')
-const path = require('path')
 
 const createJestConfig = nextJest({
   // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
@@ -10,10 +9,10 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
+  moduleDirectories: ['node_modules', '<rootDir>'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
-  modulePaths: ['<rootDir>'],
   collectCoverageFrom: [
     'components/**/*.{js,jsx,ts,tsx}',
     'lib/**/*.{js,jsx,ts,tsx}',
@@ -33,16 +32,4 @@ const customJestConfig = {
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-// We need to merge moduleNameMapper to ensure @/ alias works
-module.exports = async () => {
-  const jestConfig = await createJestConfig(customJestConfig)()
-  return {
-    ...jestConfig,
-    moduleNameMapper: {
-      // Spread next/jest's moduleNameMapper first
-      ...jestConfig.moduleNameMapper,
-      // Then override with our @/ alias to ensure it takes precedence
-      '^@/(.*)$': path.join(__dirname, '$1'),
-    },
-  }
-}
+module.exports = createJestConfig(customJestConfig)
