@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Chat Demo - App Demo</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #0f0f0f;
+            --bg-card: #1a1a1a;
+            --bg-card-hover: #252525;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --border: #2e2e2e;
+            --success: #22c55e;
+            --warning: #eab308;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .presentation {
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            padding: 60px 80px;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .slide.prev {
+            transform: translateX(-50px);
+        }
+
+        /* Title Slide */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background:
+                radial-gradient(ellipse at 30% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+                var(--bg-dark);
+        }
+
+        .title-slide h1 {
+            font-size: 5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 60px;
+        }
+
+        .title-slide .tagline {
+            font-size: 1.2rem;
+            color: var(--accent);
+            padding: 12px 24px;
+            border: 1px solid var(--accent);
+            border-radius: 50px;
+            display: inline-block;
+        }
+
+        /* Content Slides */
+        .content-slide {
+            display: flex;
+            flex-direction: row;
+            gap: 60px;
+        }
+
+        .content-slide.active {
+            display: flex;
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .slide-visual {
+            flex: 1.2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide h2 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: var(--text-primary);
+        }
+
+        .slide h3 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--accent);
+            margin-bottom: 15px;
+        }
+
+        .slide p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .slide ul {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .slide li {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .slide li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+
+        /* Screenshot Container */
+        .screenshot-container {
+            position: relative;
+            max-width: 100%;
+            max-height: 80vh;
+        }
+
+        .screenshot {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 16px;
+            box-shadow:
+                0 0 0 1px var(--border),
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                0 0 100px var(--accent-glow);
+            object-fit: contain;
+        }
+
+        .screenshot-label {
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        /* Feature Cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+        }
+
+        .feature-card h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .feature-card p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .badge-accent {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .badge-success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: var(--bg-card);
+            padding: 12px 24px;
+            border-radius: 50px;
+            border: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .slide-counter {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent);
+            transition: width 0.3s ease;
+            z-index: 100;
+        }
+
+        /* Full-width slide */
+        .full-slide {
+            padding: 60px 80px;
+            justify-content: flex-start;
+        }
+
+        .full-slide.active {
+            display: flex;
+        }
+
+        .full-slide h2 {
+            margin-bottom: 40px;
+        }
+
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            width: 100%;
+        }
+
+        .model-card {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .model-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .model-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .model-card h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .model-card p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+        }
+
+        /* Workflow slide */
+        .workflow {
+            display: flex;
+            gap: 30px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .workflow-step {
+            flex: 1;
+            min-width: 200px;
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .workflow-step::after {
+            content: "→";
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            color: var(--accent);
+        }
+
+        .workflow-step:last-child::after {
+            display: none;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .workflow-step h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .workflow-step p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+        }
+
+        /* Centered slide */
+        .centered-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .centered-slide.active {
+            display: flex;
+        }
+
+        /* Tech stack */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            margin-top: 30px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .tech-section h4 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .tech-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tech-item {
+            background: var(--bg-card);
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            border: 1px solid var(--border);
+        }
+
+        /* End slide */
+        .end-slide {
+            background:
+                radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.2) 0%, transparent 60%),
+                var(--bg-dark);
+        }
+
+        .end-slide h2 {
+            font-size: 4rem;
+            margin-bottom: 30px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .cta-btn {
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .cta-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .cta-primary:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        .cta-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .cta-secondary:hover {
+            border-color: var(--accent);
+            background: var(--bg-card);
+        }
+
+        /* Keyboard hint */
+        .keyboard-hint {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            opacity: 0.6;
+        }
+
+        .keyboard-hint kbd {
+            background: var(--bg-card);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin: 0 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progress"></div>
+
+    <div class="presentation">
+        <!-- Slide 1: Title -->
+        <section class="slide title-slide active" data-slide="0">
+            <h1>Multi-Chat Demo</h1>
+            <p class="subtitle">Chat with Multiple AI Models Simultaneously</p>
+            <span class="tagline">🚀 Compare AI Responses in Real-Time</span>
+        </section>
+
+        <!-- Slide 2: Welcome Screen -->
+        <section class="slide content-slide" data-slide="1">
+            <div class="slide-content">
+                <h3>Getting Started</h3>
+                <h2>Welcome Screen</h2>
+                <p>The clean, modern welcome screen greets users with a simple authentication interface.</p>
+                <ul>
+                    <li>Sign in to existing account</li>
+                    <li>Create a new account</li>
+                    <li>Dark mode by default</li>
+                    <li>Responsive design</li>
+                </ul>
+            </div>
+            <div class="slide-visual">
+                <div class="screenshot-container">
+                    <img src="screenshots/01-welcome-screen.png" alt="Welcome Screen" class="screenshot">
+                    <span class="screenshot-label">Authentication Page</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 3: Sign Up -->
+        <section class="slide content-slide" data-slide="2">
+            <div class="slide-content">
+                <h3>Create Account</h3>
+                <h2>Easy Registration</h2>
+                <p>Quick sign-up process with minimal required information.</p>
+                <ul>
+                    <li>Username selection</li>
+                    <li>Email address</li>
+                    <li>Secure password creation</li>
+                    <li>Instant account activation</li>
+                </ul>
+                <div style="margin-top: 20px;">
+                    <span class="badge badge-success">✓ No email verification required</span>
+                    <span class="badge badge-accent">Fast onboarding</span>
+                </div>
+            </div>
+            <div class="slide-visual">
+                <div class="screenshot-container">
+                    <img src="screenshots/02-sign-up.png" alt="Sign Up" class="screenshot">
+                    <span class="screenshot-label">Registration Form</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 4: Create Conversation -->
+        <section class="slide content-slide" data-slide="3">
+            <div class="slide-content">
+                <h3>Conversation Management</h3>
+                <h2>Create New Chats</h2>
+                <p>Start conversations with one click. The sidebar shows all your chat history.</p>
+                <ul>
+                    <li>One-click conversation creation</li>
+                    <li>Conversations sorted by recent activity</li>
+                    <li>Easy rename with double-click</li>
+                    <li>Quick delete option</li>
+                </ul>
+            </div>
+            <div class="slide-visual">
+                <div class="screenshot-container">
+                    <img src="screenshots/04-new-conversation.png" alt="New Conversation" class="screenshot">
+                    <span class="screenshot-label">Conversation Sidebar</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 5: Model Selection -->
+        <section class="slide content-slide" data-slide="4">
+            <div class="slide-content">
+                <h3>AI Models</h3>
+                <h2>Choose Your Models</h2>
+                <p>Select one or multiple AI models to chat with simultaneously.</p>
+                <ul>
+                    <li>Claude 4.5 Sonnet, Haiku & Opus</li>
+                    <li>Ollama models (Llama, Mistral, Phi)</li>
+                    <li>Multi-select capability</li>
+                    <li>Visual selection feedback</li>
+                </ul>
+                <div style="margin-top: 20px;">
+                    <span class="badge badge-accent">7+ AI Models</span>
+                    <span class="badge badge-success">Compare side-by-side</span>
+                </div>
+            </div>
+            <div class="slide-visual">
+                <div class="screenshot-container">
+                    <img src="screenshots/05-model-selection.png" alt="Model Selection" class="screenshot">
+                    <span class="screenshot-label">Model Selection Dropdown</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 6: Supported Models -->
+        <section class="slide full-slide" data-slide="5">
+            <h2>Supported AI Models</h2>
+            <div class="models-grid">
+                <div class="model-card">
+                    <div class="model-icon">🎭</div>
+                    <h4>Claude Sonnet</h4>
+                    <p>Balanced performance</p>
+                </div>
+                <div class="model-card">
+                    <div class="model-icon">⚡</div>
+                    <h4>Claude Haiku</h4>
+                    <p>Fast responses</p>
+                </div>
+                <div class="model-card">
+                    <div class="model-icon">🧠</div>
+                    <h4>Claude Opus</h4>
+                    <p>Maximum capability</p>
+                </div>
+                <div class="model-card">
+                    <div class="model-icon">🦙</div>
+                    <h4>Llama 3.2</h4>
+                    <p>Open source</p>
+                </div>
+                <div class="model-card">
+                    <div class="model-icon">🦙</div>
+                    <h4>Llama 3.1</h4>
+                    <p>Versatile model</p>
+                </div>
+                <div class="model-card">
+                    <div class="model-icon">🌪️</div>
+                    <h4>Mistral</h4>
+                    <p>Efficient & fast</p>
+                </div>
+                <div class="model-card">
+                    <div class="model-icon">⚛️</div>
+                    <h4>Phi-3</h4>
+                    <p>Microsoft's model</p>
+                </div>
+                <div class="model-card" style="border-style: dashed; opacity: 0.6;">
+                    <div class="model-icon">➕</div>
+                    <h4>More Coming</h4>
+                    <p>Extensible design</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 7: Chat Interface -->
+        <section class="slide content-slide" data-slide="6">
+            <div class="slide-content">
+                <h3>Chat Experience</h3>
+                <h2>Send Messages</h2>
+                <p>Clean, intuitive chat interface with markdown support.</p>
+                <ul>
+                    <li>Multi-line message support</li>
+                    <li>Enter to send, Shift+Enter for new line</li>
+                    <li>Loading indicators during response</li>
+                    <li>Message history preserved</li>
+                </ul>
+            </div>
+            <div class="slide-visual">
+                <div class="screenshot-container">
+                    <img src="screenshots/08-message-input.png" alt="Message Input" class="screenshot">
+                    <span class="screenshot-label">Message Input Area</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 8: Chat Responses -->
+        <section class="slide content-slide" data-slide="7">
+            <div class="slide-content">
+                <h3>AI Responses</h3>
+                <h2>View Responses</h2>
+                <p>See AI responses appear in real-time with clear model attribution.</p>
+                <ul>
+                    <li>Responses labeled by model</li>
+                    <li>Timestamped messages</li>
+                    <li>Conversation context maintained</li>
+                    <li>Smooth scrolling</li>
+                </ul>
+            </div>
+            <div class="slide-visual">
+                <div class="screenshot-container">
+                    <img src="screenshots/09-chat-responses.png" alt="Chat Responses" class="screenshot">
+                    <span class="screenshot-label">Chat Window with Responses</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 9: Multi-Model Responses -->
+        <section class="slide content-slide" data-slide="8">
+            <div class="slide-content">
+                <h3>Core Feature</h3>
+                <h2>Multi-Model Comparison</h2>
+                <p>The key feature: see how different AI models respond to the same prompt.</p>
+                <ul>
+                    <li>Parallel API requests</li>
+                    <li>Side-by-side comparison</li>
+                    <li>Each response clearly labeled</li>
+                    <li>Identify best model for your needs</li>
+                </ul>
+                <div style="margin-top: 20px;">
+                    <span class="badge badge-accent">⚡ Parallel Processing</span>
+                    <span class="badge badge-success">Real-time Results</span>
+                </div>
+            </div>
+            <div class="slide-visual">
+                <div class="screenshot-container">
+                    <img src="screenshots/10-multi-model-responses.png" alt="Multi-Model Responses" class="screenshot">
+                    <span class="screenshot-label">Multiple Model Responses</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 10: Profile Menu -->
+        <section class="slide content-slide" data-slide="9">
+            <div class="slide-content">
+                <h3>User Settings</h3>
+                <h2>Profile Menu</h2>
+                <p>Quick access to all user settings from the profile dropdown.</p>
+                <ul>
+                    <li>Edit profile information</li>
+                    <li>Change password</li>
+                    <li>Toggle dark mode</li>
+                    <li>Sign out</li>
+                </ul>
+            </div>
+            <div class="slide-visual">
+                <div class="screenshot-container">
+                    <img src="screenshots/11-profile-menu.png" alt="Profile Menu" class="screenshot">
+                    <span class="screenshot-label">Profile Dropdown Menu</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 11: Edit Profile -->
+        <section class="slide content-slide" data-slide="10">
+            <div class="slide-content">
+                <h3>Profile Management</h3>
+                <h2>Edit Your Profile</h2>
+                <p>Update your account information easily.</p>
+                <ul>
+                    <li>Change username</li>
+                    <li>Update email address</li>
+                    <li>Upload custom avatar</li>
+                    <li>Instant save</li>
+                </ul>
+            </div>
+            <div class="slide-visual">
+                <div class="screenshot-container">
+                    <img src="screenshots/12-edit-profile.png" alt="Edit Profile" class="screenshot">
+                    <span class="screenshot-label">Edit Profile Modal</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 12: Avatar Upload -->
+        <section class="slide content-slide" data-slide="11">
+            <div class="slide-content">
+                <h3>Personalization</h3>
+                <h2>Custom Avatar</h2>
+                <p>Upload your own profile picture with automatic processing.</p>
+                <ul>
+                    <li>Support for JPEG, PNG, GIF, WebP</li>
+                    <li>Automatic resizing</li>
+                    <li>Metadata stripping for privacy</li>
+                    <li>One-click removal option</li>
+                </ul>
+                <div style="margin-top: 20px;">
+                    <span class="badge badge-success">✓ Max 5MB</span>
+                    <span class="badge badge-accent">Auto-processed</span>
+                </div>
+            </div>
+            <div class="slide-visual">
+                <div class="screenshot-container">
+                    <img src="screenshots/14-avatar-upload.png" alt="Avatar Upload" class="screenshot">
+                    <span class="screenshot-label">Avatar Upload Section</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 13: Dark Mode -->
+        <section class="slide content-slide" data-slide="12">
+            <div class="slide-content">
+                <h3>Appearance</h3>
+                <h2>Dark Mode</h2>
+                <p>Easy toggle between light and dark themes.</p>
+                <ul>
+                    <li>One-click theme switch</li>
+                    <li>Preference saved across sessions</li>
+                    <li>Reduced eye strain</li>
+                    <li>Modern dark aesthetic</li>
+                </ul>
+            </div>
+            <div class="slide-visual">
+                <div class="screenshot-container">
+                    <img src="screenshots/15-dark-mode.png" alt="Dark Mode" class="screenshot">
+                    <span class="screenshot-label">Dark Mode Toggle</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 14: Workflow -->
+        <section class="slide full-slide" data-slide="13">
+            <h2>User Workflow</h2>
+            <div class="workflow">
+                <div class="workflow-step">
+                    <div class="step-number">1</div>
+                    <h4>Sign Up / Sign In</h4>
+                    <p>Create account or login to your existing account</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">2</div>
+                    <h4>Select Models</h4>
+                    <p>Choose one or more AI models to chat with</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">3</div>
+                    <h4>Create Chat</h4>
+                    <p>Start a new conversation with selected models</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">4</div>
+                    <h4>Send Message</h4>
+                    <p>Type your question or prompt</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">5</div>
+                    <h4>Compare Results</h4>
+                    <p>View responses from all selected models</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 15: Tech Stack -->
+        <section class="slide centered-slide full-slide" data-slide="14">
+            <h2>Built With Modern Technology</h2>
+            <div class="tech-grid">
+                <div class="tech-section">
+                    <h4>Frontend</h4>
+                    <div class="tech-list">
+                        <span class="tech-item">Next.js 16</span>
+                        <span class="tech-item">React 19</span>
+                        <span class="tech-item">TypeScript</span>
+                        <span class="tech-item">Tailwind CSS</span>
+                        <span class="tech-item">DaisyUI</span>
+                        <span class="tech-item">Axios</span>
+                    </div>
+                </div>
+                <div class="tech-section">
+                    <h4>Backend</h4>
+                    <div class="tech-list">
+                        <span class="tech-item">Django 5.2</span>
+                        <span class="tech-item">Django Ninja</span>
+                        <span class="tech-item">Python 3.13</span>
+                        <span class="tech-item">SQLite</span>
+                        <span class="tech-item">Pillow</span>
+                        <span class="tech-item">uv</span>
+                    </div>
+                </div>
+                <div class="tech-section">
+                    <h4>AI Integration</h4>
+                    <div class="tech-list">
+                        <span class="tech-item">Anthropic API</span>
+                        <span class="tech-item">Ollama API</span>
+                        <span class="tech-item">HTTPX</span>
+                        <span class="tech-item">Async Processing</span>
+                    </div>
+                </div>
+                <div class="tech-section">
+                    <h4>Testing</h4>
+                    <div class="tech-list">
+                        <span class="tech-item">Jest</span>
+                        <span class="tech-item">Pytest</span>
+                        <span class="tech-item">React Testing Library</span>
+                        <span class="tech-item">Coverage Reports</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 16: Key Features Summary -->
+        <section class="slide full-slide" data-slide="15">
+            <h2>Key Features</h2>
+            <div class="feature-grid" style="margin-top: 30px;">
+                <div class="feature-card">
+                    <h4>🤖 Multi-Model Chat</h4>
+                    <p>Chat with multiple AI models simultaneously and compare their responses in real-time</p>
+                </div>
+                <div class="feature-card">
+                    <h4>⚡ Parallel Processing</h4>
+                    <p>All selected models respond in parallel for fast results</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔐 Secure Authentication</h4>
+                    <p>Session-based auth with profile management and password change</p>
+                </div>
+                <div class="feature-card">
+                    <h4>💬 Conversation History</h4>
+                    <p>Context window management keeps conversation context for better responses</p>
+                </div>
+                <div class="feature-card">
+                    <h4>👤 User Profiles</h4>
+                    <p>Custom avatars, profile editing, and personalization options</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🌙 Dark Mode</h4>
+                    <p>Modern UI with light/dark theme toggle and persistent preference</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 17: End -->
+        <section class="slide title-slide end-slide centered-slide" data-slide="16">
+            <h2>Thank You!</h2>
+            <p class="subtitle">Ready to try Multi-Chat Demo?</p>
+            <div class="cta-buttons">
+                <a href="../README.md" class="cta-btn cta-primary">View Documentation</a>
+                <a href="quick-start.md" class="cta-btn cta-secondary">Quick Start Guide</a>
+            </div>
+        </section>
+    </div>
+
+    <div class="nav">
+        <button class="nav-btn" id="prevBtn" onclick="prevSlide()">← Previous</button>
+        <span class="slide-counter" id="counter">1 / 17</span>
+        <button class="nav-btn" id="nextBtn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <div class="keyboard-hint">
+        Press <kbd>←</kbd> <kbd>→</kbd> to navigate • <kbd>F</kbd> for fullscreen
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const progress = document.getElementById('progress');
+        const counter = document.getElementById('counter');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        function updateSlide() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'prev');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else if (index < currentSlide) {
+                    slide.classList.add('prev');
+                }
+            });
+
+            progress.style.width = ((currentSlide + 1) / totalSlides * 100) + '%';
+            counter.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function goToSlide(index) {
+            if (index >= 0 && index < totalSlides) {
+                currentSlide = index;
+                updateSlide();
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                goToSlide(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                goToSlide(totalSlides - 1);
+            } else if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                } else {
+                    document.documentElement.requestFullscreen();
+                }
+            }
+        });
+
+        // Touch/swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            if (touchEndX < touchStartX - swipeThreshold) {
+                nextSlide();
+            } else if (touchEndX > touchStartX + swipeThreshold) {
+                prevSlide();
+            }
+        }
+
+        // Initialize
+        updateSlide();
+    </script>
+</body>
+</html>
