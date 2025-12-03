@@ -488,14 +488,19 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={handleCloseEditProfile}
-                    className="btn btn-ghost"
+                    className="btn btn-ghost px-6"
                     disabled={isUpdatingProfile || isUpdatingPassword}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
+<<<<<<< Updated upstream
                     className="btn btn-primary"
+=======
+                    data-testid="save-profile-button"
+                    className="btn btn-primary px-6"
+>>>>>>> Stashed changes
                     disabled={isUpdatingProfile || isUpdatingPassword}
                   >
                     {isUpdatingProfile ? (
@@ -579,7 +584,12 @@ export default function Home() {
                     </div>
                     <button
                       type="submit"
+<<<<<<< Updated upstream
                       className="btn btn-sm btn-primary w-full"
+=======
+                      data-testid="submit-change-password-button"
+                      className="btn btn-sm btn-primary w-full px-6"
+>>>>>>> Stashed changes
                       disabled={isUpdatingPassword || isUpdatingProfile}
                     >
                       {isUpdatingPassword ? (
