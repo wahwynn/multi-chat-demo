@@ -49,9 +49,32 @@ jobs:
           DJANGO_SETTINGS_MODULE: config.settings
 
       - name: Run tests with coverage
+        id: test
         run: uv run pytest --cov=chat --cov-report=xml --cov-report=html --cov-report=term
         env:
           DJANGO_SETTINGS_MODULE: config.settings
+
+      - name: Generate backend coverage summary
+        if: always()
+        run: |
+          if [ -f coverage.xml ]; then
+            COVERAGE=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); root = tree.getroot(); line_rate=float(root.attrib['line-rate'])*100; branch_rate=float(root.attrib.get('branch-rate', 0))*100; print(f'{line_rate:.2f}')")
+            BRANCH_COV=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); root = tree.getroot(); branch_rate=float(root.attrib.get('branch-rate', 0))*100; print(f'{branch_rate:.2f}')")
+            echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+            echo "branch_coverage=$BRANCH_COV" >> $GITHUB_OUTPUT
+
+            echo "## 📊 Backend Coverage Report" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Coverage |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|----------|" >> $GITHUB_STEP_SUMMARY
+            echo "| **Lines** | **${COVERAGE}%** |" >> $GITHUB_STEP_SUMMARY
+            echo "| Branches | ${BRANCH_COV}% |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📦 HTML coverage report available as artifact: \`backend-coverage\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "coverage=0" >> $GITHUB_OUTPUT
+            echo "⚠️ Coverage report not found" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -91,6 +114,40 @@ jobs:
       - name: Run tests with coverage
         working-directory: ./frontend
         run: npm run test:coverage -- --ci --passWithNoTests
+
+      - name: Generate frontend coverage summary
+        if: always()
+        working-directory: ./frontend
+        run: |
+          COV_FILE=""
+          for path in "coverage/coverage-summary.json" "coverage/coverage-summary.json"; do
+            if [ -f "$path" ]; then
+              COV_FILE="$path"
+              break
+            fi
+          done
+
+          if [ -n "$COV_FILE" ] && [ -f "$COV_FILE" ]; then
+            LINE_COV=$(python3 -c "import json; data = json.load(open('$COV_FILE')); print(f\"{data['total']['lines']['pct']:.2f}\")")
+            BRANCH_COV=$(python3 -c "import json; data = json.load(open('$COV_FILE')); print(f\"{data['total']['branches']['pct']:.2f}\")")
+            FUNC_COV=$(python3 -c "import json; data = json.load(open('$COV_FILE')); print(f\"{data['total']['functions']['pct']:.2f}\")")
+            STMT_COV=$(python3 -c "import json; data = json.load(open('$COV_FILE')); print(f\"{data['total']['statements']['pct']:.2f}\")")
+            echo "coverage=$LINE_COV" >> $GITHUB_OUTPUT
+
+            echo "## 📊 Frontend Coverage Report" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Coverage |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|----------|" >> $GITHUB_STEP_SUMMARY
+            echo "| **Lines** | **${LINE_COV}%** |" >> $GITHUB_STEP_SUMMARY
+            echo "| Statements | ${STMT_COV}% |" >> $GITHUB_STEP_SUMMARY
+            echo "| Branches | ${BRANCH_COV}% |" >> $GITHUB_STEP_SUMMARY
+            echo "| Functions | ${FUNC_COV}% |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📦 HTML coverage report available as artifact: \`frontend-coverage\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "coverage=0" >> $GITHUB_OUTPUT
+            echo "⚠️ Coverage report not found" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Verify coverage files exist
         working-directory: ./frontend
@@ -188,14 +245,28 @@ jobs:
 
       - name: Write job summary
         run: |
-          echo "## 📊 Coverage Report" >> $GITHUB_STEP_SUMMARY
+          BACKEND_COV="${{ steps.backend-cov.outputs.coverage }}"
+          FRONTEND_COV="${{ steps.frontend-cov.outputs.coverage }}"
+
+          # Determine status emoji based on coverage (using Python for comparison)
+          BACKEND_EMOJI=$(python3 -c "cov=float('$BACKEND_COV'); print('✅' if cov >= 80 else '⚠️')")
+          FRONTEND_EMOJI=$(python3 -c "cov=float('$FRONTEND_COV'); print('✅' if cov >= 80 else '⚠️')")
+
+          echo "## 📊 Combined Coverage Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Component | Coverage |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----------|----------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Backend | ${{ steps.backend-cov.outputs.coverage }}% |" >> $GITHUB_STEP_SUMMARY
-          echo "| Frontend | ${{ steps.frontend-cov.outputs.coverage }}% |" >> $GITHUB_STEP_SUMMARY
+          echo "### Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Coverage reports are available as artifacts in the Actions tab." >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Line Coverage | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|---------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Backend** | **${BACKEND_COV}%** | ${BACKEND_EMOJI} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Frontend** | **${FRONTEND_COV}%** | ${FRONTEND_EMOJI} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Coverage Reports" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend HTML Report**: Available in workflow artifacts (\`backend-coverage\`)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend HTML Report**: Available in workflow artifacts (\`frontend-coverage\`)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> 💡 View detailed coverage reports by downloading the artifacts from the Actions tab." >> $GITHUB_STEP_SUMMARY
 
       - name: Comment PR
         if: github.event_name == 'pull_request'
