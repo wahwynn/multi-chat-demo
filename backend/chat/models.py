@@ -21,6 +21,10 @@ class UserProfile(models.Model):
     avatar = models.ImageField(upload_to=avatar_upload_path, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
+
     def __str__(self):
         return f"{self.user.username}'s profile"
 
