@@ -11,7 +11,7 @@ repos:
       - id: check-toml
       - id: check-json
       - id: check-added-large-files
-        args: ['--maxkb=1024']
+        args: ["--maxkb=1024"]
       - id: check-merge-conflict
       - id: debug-statements
         exclude: ^backend/.*/migrations/
@@ -34,3 +34,14 @@ repos:
         additional_dependencies: [django-stubs]
         args: [--config-file=mypy.ini]
         exclude: ^(backend/.*/migrations/|.*/tests\.py$)
+
+  # Django migrations check
+  - repo: local
+    hooks:
+      - id: check-django-migrations
+        name: Check Django migrations
+        entry: bash scripts/check-migrations.sh
+        language: system
+        pass_filenames: false
+        always_run: false
+        files: ^backend/.*\.(py)$
