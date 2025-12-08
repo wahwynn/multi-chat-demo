@@ -2,6 +2,7 @@
 
 import { Message, MODEL_OPTIONS, User } from '@/lib/types';
 import { useEffect, useRef, useMemo } from 'react';
+import Image from 'next/image';
 
 interface ChatWindowProps {
   messages: Message[];
@@ -56,9 +57,11 @@ export default function ChatWindow({ messages, expectedModelCount, selectedModel
           <div className="chat chat-end mb-4">
             <div className="chat-image avatar">
               <div className="w-10 h-10 rounded-full ring ring-purple-500/50 ring-offset-base-100 ring-offset-1 overflow-hidden">
-                <img
+                <Image
                   src={user?.avatar_url || '/default-avatar.svg'}
                   alt={user?.username || 'User'}
+                  width={40}
+                  height={40}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -108,9 +111,11 @@ export default function ChatWindow({ messages, expectedModelCount, selectedModel
           <div className="chat chat-end mb-4">
             <div className="chat-image avatar">
               <div className="w-10 h-10 rounded-full ring ring-purple-500/50 ring-offset-base-100 ring-offset-1 overflow-hidden">
-                <img
+                <Image
                   src={user?.avatar_url || '/default-avatar.svg'}
                   alt={user?.username || 'User'}
+                  width={40}
+                  height={40}
                   className="w-full h-full object-cover"
                 />
               </div>
