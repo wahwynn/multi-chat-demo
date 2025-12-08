@@ -13,6 +13,7 @@ router = Router()
 # Security constants for avatar uploads
 MAX_AVATAR_SIZE = 1048576  # 1MB
 MAX_AVATAR_DIMENSIONS = (2048, 2048)  # Max width/height
+AVATAR_TARGET_SIZE = (96, 96)  # Target size for avatar resizing
 ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "GIF", "WEBP"}
 FORMAT_TO_CONTENT_TYPE = {
     "JPEG": "image/jpeg",
@@ -67,13 +68,18 @@ def validate_and_process_image(
                 f"Invalid image format. Allowed: {', '.join(ALLOWED_IMAGE_FORMATS)}",
             )
 
-        # Check dimensions
+        # Check dimensions - reject if too large before processing
         if (
             img.width > MAX_AVATAR_DIMENSIONS[0]
             or img.height > MAX_AVATAR_DIMENSIONS[1]
         ):
-            # Resize the image instead of rejecting
-            img.thumbnail(MAX_AVATAR_DIMENSIONS, Image.Resampling.LANCZOS)
+            return (
+                None,
+                f"Image too large. Maximum dimensions are {MAX_AVATAR_DIMENSIONS[0]}x{MAX_AVATAR_DIMENSIONS[1]} pixels.",
+            )
+
+        # Always resize avatar to target size, maintaining aspect ratio
+        img.thumbnail(AVATAR_TARGET_SIZE, Image.Resampling.LANCZOS)
 
         # Convert to RGB if necessary (for JPEG output from RGBA/P modes)
         if img_format == "JPEG" and img.mode in ("RGBA", "P"):

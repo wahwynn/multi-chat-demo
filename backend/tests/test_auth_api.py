@@ -475,10 +475,10 @@ class TestAuthAPI:
         assert response.status_code == 200
 
     def test_upload_avatar_large_dimensions(self, authenticated_client):
-        """Test uploading avatar with large dimensions (should resize)"""
+        """Test uploading avatar with large dimensions (should resize to 400x400)"""
         client, user = authenticated_client
-        # Create a large image (3000x3000)
-        img = Image.new("RGB", (3000, 3000), color="blue")
+        # Create a large image (1500x1500) - will be resized to 400x400
+        img = Image.new("RGB", (1500, 1500), color="blue")
         img_io = io.BytesIO()
         img.save(img_io, format="PNG")
         img_io.seek(0)
@@ -490,6 +490,35 @@ class TestAuthAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["avatar_url"] is not None
+
+        # Verify the image was resized by checking the saved file
+        profile = UserProfile.objects.get(user=user)
+        assert profile.avatar.name
+        saved_img = Image.open(profile.avatar)
+        # Image should be resized to max 400x400 (maintaining aspect ratio)
+        assert saved_img.width <= 400
+        assert saved_img.height <= 400
+
+    def test_upload_avatar_too_large_dimensions(self, authenticated_client):
+        """Test uploading avatar with dimensions exceeding max (should be rejected)"""
+        client, _ = authenticated_client
+        # Create an image larger than MAX_AVATAR_DIMENSIONS (2048x2048)
+        img = Image.new("RGB", (3000, 3000), color="blue")
+        img_io = io.BytesIO()
+        img.save(img_io, format="PNG")
+        img_io.seek(0)
+
+        response = client.post(
+            "/api/auth/avatar",
+            {"file": SimpleUploadedFile("too_large.png", img_io.read(), "image/png")},
+        )
+        assert response.status_code == 400
+        data = response.json()
+        assert "error" in data
+        assert (
+            "too large" in data["error"].lower()
+            or "dimensions" in data["error"].lower()
+        )
 
     def test_upload_avatar_replace_existing(self, authenticated_client):
         """Test replacing existing avatar"""
