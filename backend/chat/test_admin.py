@@ -1,4 +1,5 @@
 import pytest
+from django.contrib import admin
 from django.contrib.auth.models import User
 from chat.models import Conversation, Message
 from chat.admin import MessageAdmin
@@ -19,8 +20,8 @@ class TestAdmin:
         message = Message.objects.create(
             conversation=conversation, role="user", content="Short message"
         )
-        admin = MessageAdmin(Message, None)
-        preview = admin.content_preview(message)
+        admin_instance = MessageAdmin(Message, admin.site)
+        preview = admin_instance.content_preview(message)
         assert preview == "Short message"
 
     def test_message_admin_content_preview_long(self):
@@ -35,8 +36,8 @@ class TestAdmin:
         message = Message.objects.create(
             conversation=conversation, role="user", content=long_content
         )
-        admin = MessageAdmin(Message, None)
-        preview = admin.content_preview(message)
+        admin_instance = MessageAdmin(Message, admin.site)
+        preview = admin_instance.content_preview(message)
         assert len(preview) == 53  # 50 chars + "..."
         assert preview.endswith("...")
         assert preview.startswith(long_content[:50])

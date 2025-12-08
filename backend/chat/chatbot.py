@@ -33,9 +33,9 @@ async def get_single_model_response_async(
             ollama_model = model.replace("ollama-", "")
 
             # Convert messages to Ollama format
-            formatted_messages = []
+            ollama_messages: list[dict[str, str]] = []
             for role, content in messages:
-                formatted_messages.append({"role": role, "content": content})
+                ollama_messages.append({"role": role, "content": content})
 
             # Call Ollama API using httpx
             async with httpx.AsyncClient(timeout=300.0) as client:
@@ -43,7 +43,7 @@ async def get_single_model_response_async(
                     f"{ollama_base_url}/api/chat",
                     json={
                         "model": ollama_model,
-                        "messages": formatted_messages,
+                        "messages": ollama_messages,
                         "stream": False,
                     },
                 )
@@ -61,23 +61,27 @@ async def get_single_model_response_async(
                 )
         else:
             # Use Anthropic API for Claude models
-            client = anthropic.AsyncAnthropic(api_key=api_key)
+            anthropic_client: anthropic.AsyncAnthropic = anthropic.AsyncAnthropic(
+                api_key=api_key
+            )
 
             # Convert messages to Anthropic format
-            formatted_messages = []
+            formatted_messages: list[dict[str, str]] = []
             for role, content in messages:
                 formatted_messages.append({"role": role, "content": content})
 
             # Call Claude API asynchronously
-            response = await client.messages.create(
-                model=model, max_tokens=2048, messages=formatted_messages
+            anthropic_response = await anthropic_client.messages.create(
+                model=model,
+                max_tokens=2048,
+                messages=formatted_messages,  # type: ignore[arg-type]
             )
 
             # Extract text from response content blocks
             # Content can contain TextBlock, ThinkingBlock, ToolUseBlock, etc.
             # We only extract text from TextBlock types
             text_parts = []
-            for block in response.content:
+            for block in anthropic_response.content:
                 # Use getattr to safely access text attribute (only exists on TextBlock)
                 text = getattr(block, "text", None)
                 if text is not None:

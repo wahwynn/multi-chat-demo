@@ -1,8 +1,25 @@
 // Mock axios.create to return our mock instance
+interface MockAxiosInstance {
+  get: jest.Mock
+  post: jest.Mock
+  patch: jest.Mock
+  delete: jest.Mock
+  put: jest.Mock
+  interceptors: {
+    request: { use: jest.Mock; eject: jest.Mock }
+    response: { use: jest.Mock; eject: jest.Mock }
+  }
+  defaults: Record<string, unknown>
+}
+
+declare global {
+  var __mockAxiosInstance: MockAxiosInstance | undefined
+}
+
 jest.mock('axios', () => {
   const actualAxios = jest.requireActual('axios')
   // Create the mock instance inside the factory
-  const instance = {
+  const instance: MockAxiosInstance = {
     get: jest.fn(),
     post: jest.fn(),
     patch: jest.fn(),
@@ -15,18 +32,23 @@ jest.mock('axios', () => {
     defaults: {},
   }
   // Store it globally so tests can access it
-  ;(global as any).__mockAxiosInstance = instance
+  global.__mockAxiosInstance = instance
   return {
     ...actualAxios,
     create: jest.fn(() => instance),
   }
 })
 
-import axios from 'axios'
 import { authApi, chatApi } from '../api'
 
 // Get the mock instance from global
-const getMockInstance = () => (global as any).__mockAxiosInstance
+const getMockInstance = (): MockAxiosInstance => {
+  const instance = global.__mockAxiosInstance
+  if (!instance) {
+    throw new Error('Mock axios instance not found')
+  }
+  return instance
+}
 
 describe('authApi', () => {
   beforeEach(() => {

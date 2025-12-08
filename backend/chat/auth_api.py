@@ -77,7 +77,7 @@ def validate_and_process_image(
 
         # Convert to RGB if necessary (for JPEG output from RGBA/P modes)
         if img_format == "JPEG" and img.mode in ("RGBA", "P"):
-            img = img.convert("RGB")
+            img = img.convert("RGB")  # type: ignore[assignment]
 
         # Strip EXIF and other metadata by re-saving the image
         # This also sanitizes the file by reconstructing it from pixel data
