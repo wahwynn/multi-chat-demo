@@ -7,7 +7,7 @@ Welcome to the Multi-Chat Demo documentation! This directory contains comprehens
 - **[User Guide](index.md)** - Complete user guide covering all features
 - **[Quick Start Guide](quick-start.md)** - Get started in minutes
 - **[FAQ](faq.md)** - Frequently asked questions
-- **[Screenshot Guide](build/screenshot-guide.md)** - Instructions for capturing screenshots
+- **[Screenshot Guide](makedocs/screenshot-guide.md)** - Instructions for capturing screenshots (automated and manual)
 
 ## 🚀 Quick Links
 

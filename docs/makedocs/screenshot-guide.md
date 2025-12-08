@@ -1,35 +1,74 @@
 # Screenshot Capture Guide
 
-This guide provides instructions for capturing screenshots to include in the help documentation.
+This guide provides instructions for capturing screenshots to include in the help documentation. You can use either the automated script (recommended) or capture screenshots manually.
 
 ## Prerequisites
 
-- The application should be running locally
-- A browser with developer tools access
-- Screenshot capture tool (browser DevTools, macOS Screenshot, or third-party tool)
+- Application running at `http://localhost:3000`
+- Backend API running at `http://localhost:8000`
+- For automated capture: Playwright installed (included in frontend dependencies)
+- For manual capture: A browser with developer tools access and screenshot capture tool
 
-## Screenshot Tools
+## Automated Screenshot Capture
 
-### macOS
+The project includes an automated screenshot capture script that uses Playwright to generate screenshots for the help documentation. This is the recommended method as it ensures consistency and saves time.
 
-- **Built-in**: `Cmd + Shift + 4` for area selection, `Cmd + Shift + 3` for full screen
-- **Preview**: File → Take Screenshot
-- **Third-party**: CleanShot X, Snagit, etc.
+### Running the Screenshot Script
 
-### Windows
+1. **Start the application** (if not already running):
 
-- **Built-in**: `Win + Shift + S` for Snipping Tool
-- **Third-party**: Greenshot, ShareX, etc.
+   ```bash
+   # Terminal 1: Start backend
+   uv run python backend/manage.py runserver
 
-### Linux
+   # Terminal 2: Start frontend
+   cd frontend
+   npm run dev
+   ```
 
-- **Built-in**: `Print Screen` or `Shift + Print Screen`
-- **Third-party**: Flameshot, Shutter, etc.
+2. **Run the screenshot script**:
 
-### Browser DevTools
+   ```bash
+   node docs/makedocs/capture-screenshots.js
+   ```
 
-- Chrome/Edge: `F12` → More tools → Capture screenshot
-- Firefox: `F12` → Settings → Screenshots
+3. **Screenshots will be saved** to `docs/screenshots/` directory with standardized filenames (see the [Screenshot Checklist](#screenshot-checklist) section below for the complete list).
+
+### How It Works
+
+The script:
+
+- Automatically creates a test user if one doesn't exist
+- Navigates through the application UI
+- Captures screenshots at key interaction points
+- Saves all screenshots to the `docs/screenshots/` directory
+
+### Creating Your Own Automation Script
+
+If you want to create your own automation script, here's a basic example:
+
+```javascript
+// screenshot-capture.js
+const { chromium } = require("playwright");
+
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+
+  // Set viewport size (1080p height, 16:10 aspect ratio)
+  await page.setViewportSize({ width: 1728, height: 1080 });
+
+  // Navigate to app
+  await page.goto("http://localhost:3000");
+
+  // Capture welcome screen
+  await page.screenshot({ path: "docs/screenshots/01-welcome-screen.png" });
+
+  // Continue for other screenshots...
+
+  await browser.close();
+})();
+```
 
 ## Screenshot Checklist
 
@@ -63,7 +102,32 @@ Capture the following screenshots and save them in the `docs/screenshots/` direc
 - [ ] `15-dark-mode.png` - Profile menu showing dark mode toggle
 - [ ] `16-sign-out.png` - Profile menu with sign out option visible
 
-## Capture Instructions
+## Manual Screenshot Capture
+
+If you prefer to capture screenshots manually or need to update specific screenshots, follow the instructions below.
+
+### Screenshot Tools
+
+#### macOS
+
+- **Built-in**: `Cmd + Shift + 4` for area selection, `Cmd + Shift + 3` for full screen
+- **Preview**: File → Take Screenshot
+- **Third-party**: CleanShot X, Snagit, etc.
+
+#### Windows
+
+- **Built-in**: `Win + Shift + S` for Snipping Tool
+- **Third-party**: Greenshot, ShareX, etc.
+
+#### Linux
+
+- **Built-in**: `Print Screen` or `Shift + Print Screen`
+- **Third-party**: Flameshot, Shutter, etc.
+
+#### Browser DevTools
+
+- Chrome/Edge: `F12` → More tools → Capture screenshot
+- Firefox: `F12` → Settings → Screenshots
 
 ### Screenshot Specifications
 
@@ -224,7 +288,7 @@ Capture the following screenshots and save them in the `docs/screenshots/` direc
    - Use lowercase with hyphens
    - Include the number prefix for ordering
 
-## Post-Processing
+### Post-Processing
 
 After capturing screenshots:
 
@@ -232,33 +296,6 @@ After capturing screenshots:
 2. **Crop**: Remove unnecessary browser chrome or empty space
 3. **Optimize**: Compress images if they're too large (use tools like TinyPNG, ImageOptim)
 4. **Verify**: Ensure filenames match exactly what's referenced in the documentation
-
-## Automated Screenshot Script
-
-You can use Playwright or Puppeteer to automate screenshot capture. Here's a basic example:
-
-```javascript
-// screenshot-capture.js
-const { chromium } = require("playwright");
-
-(async () => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-
-  // Set viewport size (1080p height, 16:10 aspect ratio)
-  await page.setViewportSize({ width: 1728, height: 1080 });
-
-  // Navigate to app
-  await page.goto("http://localhost:3000");
-
-  // Capture welcome screen
-  await page.screenshot({ path: "docs/screenshots/01-welcome-screen.png" });
-
-  // Continue for other screenshots...
-
-  await browser.close();
-})();
-```
 
 ## Verification
 
