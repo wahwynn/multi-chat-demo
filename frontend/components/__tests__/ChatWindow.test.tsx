@@ -110,7 +110,20 @@ describe('ChatWindow', () => {
 
     const avatar = screen.getByAltText('testuser')
     expect(avatar).toBeInTheDocument()
-    expect(avatar).toHaveAttribute('src', 'https://example.com/avatar.png')
+    // Next.js Image component transforms URLs, so check that the src contains the original URL
+    const src = avatar.getAttribute('src')
+    expect(src).toBeTruthy()
+    // Extract and decode the URL parameter from Next.js Image src format
+    if (src) {
+      const urlMatch = src.match(/url=([^&]+)/)
+      if (urlMatch) {
+        const decodedUrl = decodeURIComponent(urlMatch[1])
+        expect(decodedUrl).toBe('https://example.com/avatar.png')
+      } else {
+        // Fallback: check if src contains the URL-encoded version
+        expect(src).toContain('https%3A%2F%2Fexample.com%2Favatar.png')
+      }
+    }
   })
 
   it('displays default avatar when user not provided', () => {
