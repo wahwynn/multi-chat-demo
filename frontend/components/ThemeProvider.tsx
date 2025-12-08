@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 
 type Theme = 'light' | 'dark';
 
@@ -24,36 +24,24 @@ export function useTheme() {
 }
 
 export default function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
-
-  // Apply theme immediately on mount
-  useEffect(() => {
-    setMounted(true);
-    // Check localStorage first, then system preference
+  // Initialize theme from localStorage or system preference
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'light';
     const savedTheme = localStorage.getItem('theme') as Theme | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      applyTheme(savedTheme);
-    } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const systemTheme = prefersDark ? 'dark' : 'light';
-      setTheme(systemTheme);
-      applyTheme(systemTheme);
-    }
-  }, []);
+    if (savedTheme) return savedTheme;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return prefersDark ? 'dark' : 'light';
+  });
 
-  // Also apply theme when theme state changes
-  useEffect(() => {
-    if (mounted) {
-      applyTheme(theme);
-    }
-  }, [theme, mounted]);
-
-  const applyTheme = (newTheme: Theme) => {
+  const applyTheme = useCallback((newTheme: Theme) => {
     document.documentElement.setAttribute('data-theme', newTheme);
     console.log('Applied theme:', newTheme); // Debug log
-  };
+  }, []);
+
+  // Apply theme to DOM when theme state changes
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme, applyTheme]);
 
   const toggleTheme = () => {
     const newTheme: Theme = theme === 'light' ? 'dark' : 'light';

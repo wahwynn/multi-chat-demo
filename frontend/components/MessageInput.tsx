@@ -17,7 +17,7 @@ export default function MessageInput({ onSend, disabled }: MessageInputProps) {
     }
   };
 
-  const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -30,7 +30,7 @@ export default function MessageInput({ onSend, disabled }: MessageInputProps) {
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyDown}
           placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
           className="textarea textarea-bordered flex-1 resize-none text-base leading-relaxed"
           rows={3}
