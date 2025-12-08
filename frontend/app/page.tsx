@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import ConversationList from '@/components/ConversationList';
 import ChatWindow from '@/components/ChatWindow';
 import MessageInput from '@/components/MessageInput';
@@ -268,7 +269,7 @@ export default function Home() {
 
         // Send the message to the new conversation
         setIsLoading(true);
-        const response = await chatApi.sendMessage(newConv.id, content);
+        await chatApi.sendMessage(newConv.id, content);
 
         // Reload conversation to get all messages including the new ones
         await loadConversation(newConv.id);
@@ -287,7 +288,7 @@ export default function Home() {
 
     try {
       setIsLoading(true);
-      const response = await chatApi.sendMessage(selectedConversationId, content);
+      await chatApi.sendMessage(selectedConversationId, content);
 
       // Reload conversation to get all messages including the new ones
       await loadConversation(selectedConversationId);
@@ -343,9 +344,11 @@ export default function Home() {
             <div className="dropdown dropdown-end">
               <div tabIndex={0} role="button" data-testid="avatar-button" className="btn btn-circle avatar">
                 <div className="w-10 rounded-full ring ring-purple-500 ring-offset-base-100 ring-offset-1">
-                  <img
+                  <Image
                     src={user.avatar_url || '/default-avatar.svg'}
                     alt={user.username}
+                    width={40}
+                    height={40}
                     className="rounded-full object-cover"
                   />
                 </div>
@@ -370,9 +373,11 @@ export default function Home() {
                   <div className="flex items-center gap-3 w-full">
                     <div className="relative">
                       <div className="w-12 h-12 rounded-full ring ring-purple-500 ring-offset-base-100 ring-offset-1 overflow-hidden">
-                        <img
+                        <Image
                           src={user.avatar_url || '/default-avatar.svg'}
                           alt={user.username}
+                          width={48}
+                          height={48}
                           className="w-full h-full object-cover"
                         />
                       </div>
