@@ -180,7 +180,7 @@ See [TESTING.md](TESTING.md) for detailed testing documentation.
 
 ## Automated Screenshot Capture
 
-The project includes an automated screenshot capture script using Playwright for generating documentation screenshots. See [docs/screenshot-capture.md](docs/screenshot-capture.md) for detailed instructions.
+The project includes an automated screenshot capture script using Playwright for generating documentation screenshots. See [docs/makedocs/screenshot-guide.md](docs/makedocs/screenshot-guide.md) for detailed instructions.
 
 ## Project Structure
 
@@ -216,11 +216,10 @@ multi-chat-demo/
 │   ├── index.md            # Main user guide
 │   ├── quick-start.md      # Quick start guide
 │   ├── faq.md              # Frequently asked questions
-│   ├── screenshot-capture.md  # Automated screenshot instructions
 │   ├── makedocs/           # Build tools and guides
 │   │   ├── capture-screenshots.js
 │   │   ├── create-placeholders.html
-│   │   └── screenshot-guide.md
+│   │   └── screenshot-guide.md  # Automated screenshot instructions
 │   └── screenshots/        # Documentation screenshots
 ├── pyproject.toml          # Python project configuration
 ├── README_SETUP.md         # Detailed setup instructions
