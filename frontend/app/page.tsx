@@ -338,9 +338,6 @@ export default function Home() {
             </h1>
           </div>
           <div className="flex-none gap-4 items-center">
-            {isLoading && (
-              <span className="loading loading-spinner loading-md"></span>
-            )}
             <div className="dropdown dropdown-end">
               <div tabIndex={0} role="button" data-testid="avatar-button" className="btn btn-circle avatar">
                 <div className="w-10 rounded-full ring ring-purple-500 ring-offset-base-100 ring-offset-1">
@@ -616,7 +613,13 @@ export default function Home() {
               ? conversations.find(c => c.id === selectedConversationId)?.selected_models.length || 1
               : 1
           }
+          selectedModels={
+            selectedConversationId
+              ? conversations.find(c => c.id === selectedConversationId)?.selected_models || ['claude-sonnet-4-5']
+              : ['claude-sonnet-4-5']
+          }
           user={user}
+          isLoading={isLoading}
         />
         <MessageInput onSend={handleSendMessage} disabled={isLoading} />
       </div>

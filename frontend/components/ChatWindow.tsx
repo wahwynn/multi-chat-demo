@@ -6,10 +6,12 @@ import { useEffect, useRef, useMemo } from 'react';
 interface ChatWindowProps {
   messages: Message[];
   expectedModelCount: number;  // How many models we expect responses from
+  selectedModels?: string[];  // Which models are selected for this conversation
   user?: User | null;  // Current user for avatar display
+  isLoading?: boolean;  // Whether a message is being sent/processed
 }
 
-export default function ChatWindow({ messages, expectedModelCount, user }: ChatWindowProps) {
+export default function ChatWindow({ messages, expectedModelCount, selectedModels = [], user, isLoading = false }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -18,7 +20,7 @@ export default function ChatWindow({ messages, expectedModelCount, user }: ChatW
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
   // Group messages by user message and their responses
   const groupedMessages = useMemo(() => {
@@ -98,6 +100,70 @@ export default function ChatWindow({ messages, expectedModelCount, user }: ChatW
           </div>
         </div>
       ))}
+
+      {/* Loading indicator when sending a new message */}
+      {isLoading && messages.length > 0 && (
+        <div className="mb-8">
+          {/* User message placeholder (already sent) */}
+          <div className="chat chat-end mb-4">
+            <div className="chat-image avatar">
+              <div className="w-10 h-10 rounded-full ring ring-purple-500/50 ring-offset-base-100 ring-offset-1 overflow-hidden">
+                <img
+                  src={user?.avatar_url || '/default-avatar.svg'}
+                  alt={user?.username || 'User'}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+            <div className="chat-bubble text-base leading-relaxed min-h-[3rem] opacity-70">
+              <p className="whitespace-pre-wrap">Sending...</p>
+            </div>
+          </div>
+
+          {/* Loading responses */}
+          <div className="space-y-3 ml-4">
+            {Array(expectedModelCount).fill(0).map((_, i) => {
+              const modelId = selectedModels[i] || '';
+              const modelLabel = MODEL_OPTIONS.find(m => m.value === modelId)?.label || `Model ${i + 1}`;
+              return (
+                <div key={`loading-${i}`} className="card bg-base-200 shadow-md border-2 border-primary/30">
+                  <div className="card-body p-4">
+                    <div className="flex items-center gap-3">
+                      <span className="loading loading-spinner loading-md text-primary"></span>
+                      <div className="flex-1">
+                        <div className="badge badge-primary badge-lg mb-2 animate-pulse">
+                          {modelLabel}
+                        </div>
+                        <div className="space-y-2 mt-2">
+                          <div className="h-4 bg-base-300 rounded w-3/4 animate-pulse"></div>
+                          <div className="h-4 bg-base-300 rounded w-1/2 animate-pulse"></div>
+                        </div>
+                        <p className="text-sm opacity-60 mt-3 flex items-center gap-2">
+                          <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          Generating response...
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Show loading state when no messages yet */}
+      {isLoading && messages.length === 0 && (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center px-4">
+            <span className="loading loading-spinner loading-lg text-primary mb-4"></span>
+            <p className="text-lg opacity-70">Sending your message...</p>
+          </div>
+        </div>
+      )}
+
       <div ref={messagesEndRef} />
     </div>
   );
