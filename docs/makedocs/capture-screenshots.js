@@ -114,6 +114,15 @@ async function captureScreenshots() {
 
   const page = await context.newPage();
 
+  // Set localStorage to pre-select multiple models by default
+  await page.goto(BASE_URL);
+  await page.evaluate(() => {
+    // Pre-select multiple models for better demonstration
+    const defaultModels = ['claude-sonnet-4-5', 'claude-haiku-4-5'];
+    localStorage.setItem('defaultSelectedModels', JSON.stringify(defaultModels));
+  });
+  console.log('✓ Set default selected models in localStorage');
+
   try {
     // 1. Welcome screen
     console.log('Capturing: 01-welcome-screen.png');
@@ -577,8 +586,32 @@ async function captureScreenshots() {
         const sendButton = page.locator('[data-testid="send-message-button"]').first();
         if (await sendButton.isVisible({ timeout: 2000 }).catch(() => false)) {
           await sendButton.click();
-          // Wait a bit for message to appear, but don't wait too long for AI responses
-          await delay(3000);
+          console.log('Message sent, waiting for responses...');
+
+          // Wait for at least one response card to appear
+          try {
+            await page.waitForSelector('.card.bg-base-200 .badge.badge-primary', {
+              timeout: 15000,
+              state: 'visible'
+            });
+            console.log('✓ First response detected');
+
+            // Wait a bit more for response content to be fully populated
+            await delay(2000);
+
+            // Try to wait for multiple responses (2 models selected by default)
+            const responseCards = await page.locator('.card.bg-base-200').count();
+            console.log(`Found ${responseCards} response(s)`);
+
+            // If we expect more responses, wait a bit longer
+            if (responseCards < 2) {
+              console.log('Waiting for additional model responses...');
+              await delay(5000);
+            }
+          } catch (waitError) {
+            console.log('Note: Timeout waiting for responses, continuing anyway...');
+            await delay(3000); // Fallback delay
+          }
         }
       }
     } catch (error) {
@@ -588,8 +621,6 @@ async function captureScreenshots() {
     // 9. Chat responses
     console.log('Capturing: 09-chat-responses.png');
     try {
-      // Wait a bit more for any responses that might have started
-      await delay(2000);
       if (!page.isClosed()) {
         await page.screenshot({
           path: path.join(SCREENSHOT_DIR, '09-chat-responses.png'),
@@ -604,6 +635,8 @@ async function captureScreenshots() {
     console.log('Capturing: 10-multi-model-responses.png');
     try {
       if (!page.isClosed()) {
+        // Wait a bit more to ensure all responses are complete
+        await delay(3000);
         await page.screenshot({
           path: path.join(SCREENSHOT_DIR, '10-multi-model-responses.png'),
           fullPage: false
