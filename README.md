@@ -107,6 +107,13 @@ See [README_SETUP.md](README_SETUP.md) for detailed setup instructions.
 - [Full User Guide](docs/index.md) - Complete documentation with screenshots
 - [FAQ](docs/faq.md) - Frequently asked questions
 
+## Presentations
+
+🎥 **Interactive Slideshows**:
+
+- [Demo Slideshow](docs/demo-slideshow.html) - Product features and user experience walkthrough
+- [Tech Slideshow](docs/tech-slideshow.html) - Technical architecture, testing, and CI/CD overview
+
 ## API Endpoints
 
 ### Authentication (`/api/auth/`)

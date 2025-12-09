@@ -9,6 +9,11 @@ Welcome to the Multi-Chat Demo documentation! This directory contains comprehens
 - **[FAQ](faq.md)** - Frequently asked questions
 - **[Screenshot Guide](makedocs/screenshot-guide.md)** - Instructions for capturing screenshots (automated and manual)
 
+## 🎥 Interactive Presentations
+
+- **[Demo Slideshow](demo-slideshow.html)** - Product presentation showcasing app features and user workflow
+- **[Tech Slideshow](tech-slideshow.html)** - Technical architecture, stack, testing, and CI/CD overview
+
 ## 🚀 Quick Links
 
 - [Getting Started](index.md#getting-started)
@@ -58,17 +63,20 @@ This is the simplest method if your documentation is already in the `docs/` fold
 If you prefer to use a separate branch for GitHub Pages:
 
 1. **Create and switch to the `gh-pages` branch**:
+
    ```bash
    git checkout --orphan gh-pages
    git rm -rf .
    ```
 
 2. **Copy the docs folder contents**:
+
    ```bash
    git checkout main -- docs/
    ```
 
 3. **Move contents to root** (optional, if you want docs at root):
+
    ```bash
    git mv docs/* .
    git mv docs/.* . 2>/dev/null || true
@@ -76,11 +84,13 @@ If you prefer to use a separate branch for GitHub Pages:
    ```
 
    Or keep the docs folder structure:
+
    ```bash
    # Keep docs/ folder structure - no changes needed
    ```
 
 4. **Create a `.nojekyll` file** (if not using Jekyll):
+
    ```bash
    touch .nojekyll
    git add .nojekyll
@@ -89,6 +99,7 @@ If you prefer to use a separate branch for GitHub Pages:
    Or if using Jekyll (which this project does), ensure `_config.yml` is present.
 
 5. **Commit and push**:
+
    ```bash
    git add .
    git commit -m "Initial commit for GitHub Pages"
@@ -108,6 +119,7 @@ If you prefer to use a separate branch for GitHub Pages:
 For automated deployments, you can set up a GitHub Actions workflow:
 
 1. **Create `.github/workflows/pages.yml`**:
+
    ```yaml
    name: Deploy GitHub Pages
 
@@ -116,7 +128,7 @@ For automated deployments, you can set up a GitHub Actions workflow:
        branches:
          - main
        paths:
-         - 'docs/**'
+         - "docs/**"
 
    permissions:
      contents: read
@@ -133,7 +145,7 @@ For automated deployments, you can set up a GitHub Actions workflow:
          - name: Upload artifact
            uses: actions/upload-pages-artifact@v3
            with:
-             path: './docs'
+             path: "./docs"
          - name: Deploy to GitHub Pages
            id: deployment
            uses: actions/deploy-pages@v4
