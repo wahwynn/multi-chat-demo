@@ -22,11 +22,33 @@ export default function ConversationList({
 }: ConversationListProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  const [selectedModels, setSelectedModels] = useState<string[]>(['claude-sonnet-4-5']);  // Changed to array
+  // Load default models from localStorage or use default
+  const [selectedModels, setSelectedModels] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return ['claude-sonnet-4-5'];
+    const savedModels = localStorage.getItem('defaultSelectedModels');
+    if (savedModels) {
+      try {
+        const parsed = JSON.parse(savedModels);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error('Failed to parse saved models:', e);
+      }
+    }
+    return ['claude-sonnet-4-5'];
+  });
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<Conversation | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Save selected models to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('defaultSelectedModels', JSON.stringify(selectedModels));
+    }
+  }, [selectedModels]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -119,9 +141,7 @@ export default function ConversationList({
               <span className="truncate">
                 {selectedModels.length === 0
                   ? 'Select models...'
-                  : selectedModels.length === 1
-                  ? MODEL_OPTIONS.find(opt => opt.value === selectedModels[0])?.label
-                  : `${selectedModels.length} models selected`}
+                  : selectedModels.map(m => MODEL_OPTIONS.find(opt => opt.value === m)?.label || m).join(', ')}
               </span>
               <svg
                 className={`h-4 w-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}

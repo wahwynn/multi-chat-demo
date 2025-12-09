@@ -20,6 +20,7 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend 
   - Rename conversations
   - Delete conversations
   - Conversation history with context window support
+  - Your selected default models are automatically saved and restored across sessions
 - **Modern UI**:
   - Dark mode toggle
   - Responsive design with Tailwind CSS and DaisyUI
