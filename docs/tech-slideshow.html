@@ -837,46 +837,8 @@
       </div>
     </div>
 
-    <!-- Slide 3: Key Features -->
+    <!-- Slide 3: AI Models -->
     <div class="slide" data-slide="3">
-      <div class="slide-header">
-        <h2>Key Features</h2>
-        <p>What makes this demo interesting</p>
-      </div>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">⚡</div>
-          <div class="feature-content">
-            <h3>Multi-Model Comparison</h3>
-            <p>Chat with Claude and Ollama models simultaneously. Compare responses side-by-side in real-time.</p>
-          </div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🔐</div>
-          <div class="feature-content">
-            <h3>User Authentication</h3>
-            <p>Session-based auth with profile management, avatar uploads, and password changes.</p>
-          </div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">💬</div>
-          <div class="feature-content">
-            <h3>Conversation Management</h3>
-            <p>Create, rename, delete conversations. Context window tracks recent messages for continuity.</p>
-          </div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🌙</div>
-          <div class="feature-content">
-            <h3>Modern UI/UX</h3>
-            <p>Dark mode, responsive design, loading states, and optimistic updates.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Slide 4: AI Models -->
-    <div class="slide" data-slide="4">
       <div class="slide-header">
         <h2>Supported AI Models</h2>
         <p>Cloud and local model support</p>
@@ -919,31 +881,63 @@
       </div>
     </div>
 
-    <!-- Slide 5: API Design -->
-    <div class="slide" data-slide="5">
+    <!-- Slide 4: API Design -->
+    <div class="slide" data-slide="4">
       <div class="slide-header">
         <h2>REST API Design</h2>
-        <p>Clean, RESTful endpoints with automatic OpenAPI docs</p>
+        <p>Clean, RESTful endpoints with Django Ninja</p>
       </div>
-      <div class="code-block">
-        <pre><span class="comment"># Authentication</span>
-<span class="keyword">POST</span> <span class="string">/api/auth/register</span>  <span class="comment"># Create account</span>
-<span class="keyword">POST</span> <span class="string">/api/auth/login</span>     <span class="comment"># Sign in</span>
-<span class="keyword">GET</span>  <span class="string">/api/auth/me</span>        <span class="comment"># Current user</span>
-
-<span class="comment"># Conversations</span>
-<span class="keyword">GET</span>  <span class="string">/api/chat/conversations</span>      <span class="comment"># List all</span>
-<span class="keyword">POST</span> <span class="string">/api/chat/conversations</span>      <span class="comment"># Create new</span>
-<span class="keyword">GET</span>  <span class="string">/api/chat/conversations/{id}</span>  <span class="comment"># Get with messages</span>
-
-<span class="comment"># Messages</span>
-<span class="keyword">POST</span> <span class="string">/api/chat/conversations/{id}/messages</span>
-     <span class="comment"># Send message → Get AI responses from all selected models</span></pre>
+      <div style="display: flex; gap: 2rem; max-width: 1100px; margin-bottom: 2rem;">
+        <div style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; padding: 1.5rem;">
+          <h4 style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; margin-bottom: 1rem; color: var(--accent-cyan);">🎯 Django Ninja</h4>
+          <ul style="list-style: none; padding: 0; margin: 0;">
+            <li style="padding: 0.4rem 0; font-size: 0.85rem; color: var(--text-secondary); display: flex; gap: 0.5rem;">
+              <span style="color: var(--accent-green);">✓</span> Auto OpenAPI/Swagger docs
+            </li>
+            <li style="padding: 0.4rem 0; font-size: 0.85rem; color: var(--text-secondary); display: flex; gap: 0.5rem;">
+              <span style="color: var(--accent-green);">✓</span> Pydantic schema validation
+            </li>
+            <li style="padding: 0.4rem 0; font-size: 0.85rem; color: var(--text-secondary); display: flex; gap: 0.5rem;">
+              <span style="color: var(--accent-green);">✓</span> Type-safe with Python hints
+            </li>
+          </ul>
+        </div>
+        <div style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; padding: 1.5rem;">
+          <h4 style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; margin-bottom: 1rem; color: var(--accent-magenta);">⚡ Architecture</h4>
+          <ul style="list-style: none; padding: 0; margin: 0;">
+            <li style="padding: 0.4rem 0; font-size: 0.85rem; color: var(--text-secondary); display: flex; gap: 0.5rem;">
+              <span style="color: var(--accent-green);">✓</span> Session-based auth
+            </li>
+            <li style="padding: 0.4rem 0; font-size: 0.85rem; color: var(--text-secondary); display: flex; gap: 0.5rem;">
+              <span style="color: var(--accent-green);">✓</span> Consistent error handling
+            </li>
+            <li style="padding: 0.4rem 0; font-size: 0.85rem; color: var(--text-secondary); display: flex; gap: 0.5rem;">
+              <span style="color: var(--accent-green);">✓</span> RESTful conventions
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div style="display: flex; gap: 2rem; max-width: 1100px;">
+        <div class="code-block" style="flex: 1; margin-top: 0;">
+          <pre><span class="comment"># Authentication</span>
+<span class="keyword">POST</span> <span class="string">/api/auth/register</span>
+<span class="keyword">POST</span> <span class="string">/api/auth/login</span>
+<span class="keyword">POST</span> <span class="string">/api/auth/logout</span>
+<span class="keyword">GET</span>  <span class="string">/api/auth/me</span></pre>
+        </div>
+        <div class="code-block" style="flex: 1; margin-top: 0;">
+          <pre><span class="comment"># Conversations (CRUD)</span>
+<span class="keyword">GET</span>    <span class="string">/api/chat/conversations</span>
+<span class="keyword">POST</span>   <span class="string">/api/chat/conversations</span>
+<span class="keyword">GET</span>    <span class="string">/api/chat/conversations/{id}</span>
+<span class="keyword">PUT</span>    <span class="string">/api/chat/conversations/{id}</span>
+<span class="keyword">DELETE</span> <span class="string">/api/chat/conversations/{id}</span></pre>
+        </div>
       </div>
     </div>
 
-    <!-- Slide 6: Testing Coverage -->
-    <div class="slide" data-slide="6">
+    <!-- Slide 5: Testing Coverage -->
+    <div class="slide" data-slide="5">
       <div class="slide-header">
         <h2>Testing Coverage</h2>
         <p>Comprehensive test suites for backend and frontend</p>
@@ -998,8 +992,8 @@
       </div>
     </div>
 
-    <!-- Slide 7: CI/CD Pipeline -->
-    <div class="slide" data-slide="7">
+    <!-- Slide 6: CI/CD Pipeline -->
+    <div class="slide" data-slide="6">
       <div class="slide-header">
         <h2>CI/CD Pipeline</h2>
         <p>Automated testing with GitHub Actions</p>
@@ -1057,8 +1051,8 @@
       </div>
     </div>
 
-    <!-- Slide 8: Thank You -->
-    <div class="slide thank-you" data-slide="8">
+    <!-- Slide 7: Thank You -->
+    <div class="slide thank-you" data-slide="7">
       <h2>Thank You</h2>
       <p>Questions? Let's discuss!</p>
       <a href="#" class="repo-link">
@@ -1076,7 +1070,7 @@
         <path d="M15 18l-6-6 6-6"/>
       </svg>
     </button>
-    <span class="slide-counter" id="counter">1 / 8</span>
+    <span class="slide-counter" id="counter">1 / 7</span>
     <button class="nav-btn" id="nextBtn">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 18l6-6-6-6"/>
