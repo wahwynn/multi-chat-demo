@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Chat Demo | Technical Overview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: #1a1a24;
+      --accent-cyan: #00d9ff;
+      --accent-magenta: #ff00aa;
+      --accent-yellow: #ffd700;
+      --accent-green: #00ff88;
+      --text-primary: #f0f0f5;
+      --text-secondary: #888899;
+      --border-color: #2a2a3a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    /* Background pattern */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(0, 217, 255, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 0, 170, 0.05) 0%, transparent 50%),
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 50px,
+          rgba(255, 255, 255, 0.01) 50px,
+          rgba(255, 255, 255, 0.01) 51px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 50px,
+          rgba(255, 255, 255, 0.01) 50px,
+          rgba(255, 255, 255, 0.01) 51px
+        );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .slideshow-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 4rem;
+      opacity: 0;
+      transform: translateX(100px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .slide.exit {
+      opacity: 0;
+      transform: translateX(-100px);
+    }
+
+    /* Slide 1: Title */
+    .slide-title {
+      text-align: center;
+    }
+
+    .slide-title h1 {
+      font-size: 4.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .slide-title .subtitle {
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      font-weight: 300;
+      margin-bottom: 3rem;
+    }
+
+    .tech-badges {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .tech-badge {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1.25rem;
+      border-radius: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--accent-cyan);
+    }
+
+    /* Architecture slide */
+    .architecture {
+      display: flex;
+      gap: 3rem;
+      align-items: stretch;
+      max-width: 1200px;
+    }
+
+    .arch-box {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .arch-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .arch-box.frontend::before {
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+    }
+
+    .arch-box.backend::before {
+      background: linear-gradient(90deg, var(--accent-magenta), var(--accent-yellow));
+    }
+
+    .arch-box h3 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .arch-box h2 {
+      font-size: 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .arch-list {
+      list-style: none;
+    }
+
+    .arch-list li {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.95rem;
+    }
+
+    .arch-list li:last-child {
+      border-bottom: none;
+    }
+
+    .arch-list .icon {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+    }
+
+    .arch-box.backend .arch-list .icon {
+      background: var(--accent-magenta);
+    }
+
+    .arch-arrow {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .arch-arrow span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .arch-arrow svg {
+      width: 48px;
+      height: 24px;
+      stroke: var(--accent-yellow);
+    }
+
+    /* Slide header */
+    .slide-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .slide-header h2 {
+      font-size: 2.5rem;
+      font-weight: 600;
+    }
+
+    .slide-header p {
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+
+    /* Tech stack grid */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      max-width: 1000px;
+    }
+
+    .tech-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+
+    .tech-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent-cyan);
+    }
+
+    .tech-card .name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .tech-card .version {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--accent-green);
+      margin-bottom: 0.75rem;
+    }
+
+    .tech-card .desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Features slide */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+      max-width: 1100px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 2rem;
+      display: flex;
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.5rem;
+    }
+
+    .feature-content h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-content p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* AI Models slide */
+    .models-container {
+      display: flex;
+      gap: 3rem;
+      max-width: 1100px;
+    }
+
+    .model-group {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 2rem;
+    }
+
+    .model-group h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .model-group h3 .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .model-group.claude h3 .dot {
+      background: var(--accent-cyan);
+    }
+
+    .model-group.ollama h3 .dot {
+      background: var(--accent-magenta);
+    }
+
+    .model-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .model-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background: var(--bg-secondary);
+      border-radius: 0.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+    }
+
+    .model-item .tag {
+      font-size: 0.7rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      background: rgba(0, 217, 255, 0.15);
+      color: var(--accent-cyan);
+    }
+
+    .model-group.ollama .model-item .tag {
+      background: rgba(255, 0, 170, 0.15);
+      color: var(--accent-magenta);
+    }
+
+    /* Code snippet style */
+    .code-block {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 2rem;
+      max-width: 700px;
+      margin-top: 2rem;
+    }
+
+    .code-block pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+    }
+
+    .code-block .comment { color: #666680; }
+    .code-block .keyword { color: var(--accent-magenta); }
+    .code-block .string { color: var(--accent-green); }
+    .code-block .function { color: var(--accent-cyan); }
+
+    /* Navigation */
+    .nav-controls {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background: var(--accent-cyan);
+      color: var(--bg-primary);
+      border-color: var(--accent-cyan);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .nav-btn:disabled:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+
+    .slide-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
+      transition: width 0.3s ease;
+      z-index: 100;
+    }
+
+    /* Keyboard hint */
+    .keyboard-hint {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      opacity: 0.5;
+    }
+
+    .keyboard-hint kbd {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      margin: 0 0.2rem;
+    }
+
+    /* Thank you slide */
+    .thank-you h2 {
+      font-size: 3.5rem;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+    }
+
+    .thank-you p {
+      color: var(--text-secondary);
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .repo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      border-radius: 0.75rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-family: 'JetBrains Mono', monospace;
+      transition: all 0.2s ease;
+    }
+
+    .repo-link:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .slide.active .arch-box,
+    .slide.active .tech-card,
+    .slide.active .feature-card,
+    .slide.active .model-group {
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .slide.active .arch-box:nth-child(1),
+    .slide.active .tech-card:nth-child(1),
+    .slide.active .feature-card:nth-child(1),
+    .slide.active .model-group:nth-child(1) { animation-delay: 0.1s; }
+
+    .slide.active .arch-box:nth-child(2),
+    .slide.active .tech-card:nth-child(2),
+    .slide.active .feature-card:nth-child(2),
+    .slide.active .model-group:nth-child(2) { animation-delay: 0.2s; }
+
+    .slide.active .tech-card:nth-child(3),
+    .slide.active .feature-card:nth-child(3) { animation-delay: 0.3s; }
+
+    .slide.active .tech-card:nth-child(4),
+    .slide.active .feature-card:nth-child(4) { animation-delay: 0.4s; }
+
+    .slide.active .tech-card:nth-child(5) { animation-delay: 0.5s; }
+    .slide.active .tech-card:nth-child(6) { animation-delay: 0.6s; }
+
+    /* Testing slide */
+    .testing-container {
+      display: flex;
+      gap: 2.5rem;
+      max-width: 1200px;
+    }
+
+    .test-section {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .test-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .test-section.backend::before {
+      background: linear-gradient(90deg, var(--accent-magenta), var(--accent-yellow));
+    }
+
+    .test-section.frontend::before {
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+    }
+
+    .test-section h3 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.2rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .test-section h3 .badge {
+      font-size: 0.65rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      background: rgba(0, 217, 255, 0.15);
+      color: var(--accent-cyan);
+      font-weight: 500;
+    }
+
+    .test-section.backend h3 .badge {
+      background: rgba(255, 0, 170, 0.15);
+      color: var(--accent-magenta);
+    }
+
+    .test-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .tool-tag {
+      background: var(--bg-secondary);
+      padding: 0.35rem 0.75rem;
+      border-radius: 0.35rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .coverage-bar {
+      margin-top: 1.5rem;
+    }
+
+    .coverage-bar .label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .coverage-bar .label span:last-child {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-green);
+    }
+
+    .coverage-bar .bar {
+      height: 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .coverage-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+      border-radius: 4px;
+      transition: width 1s ease;
+    }
+
+    .test-files {
+      list-style: none;
+      margin-top: 1rem;
+    }
+
+    .test-files li {
+      padding: 0.5rem 0;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .test-files li::before {
+      content: '✓';
+      color: var(--accent-green);
+      font-size: 0.75rem;
+    }
+
+    /* CI/CD Pipeline slide */
+    .pipeline-container {
+      max-width: 1100px;
+    }
+
+    .pipeline-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .pipeline-stage {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1rem 1.5rem;
+      text-align: center;
+      min-width: 140px;
+      position: relative;
+    }
+
+    .pipeline-stage .stage-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .pipeline-stage .stage-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-primary);
+    }
+
+    .pipeline-stage.trigger {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+    }
+
+    .pipeline-stage.test {
+      border-color: var(--accent-magenta);
+      box-shadow: 0 0 20px rgba(255, 0, 170, 0.2);
+    }
+
+    .pipeline-stage.report {
+      border-color: var(--accent-green);
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+    }
+
+    .pipeline-arrow {
+      color: var(--text-secondary);
+      font-size: 1.25rem;
+    }
+
+    .workflow-details {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .workflow-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 1.5rem;
+    }
+
+    .workflow-card h4 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .workflow-card h4 .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .workflow-card:nth-child(1) h4 .dot { background: var(--accent-cyan); }
+    .workflow-card:nth-child(2) h4 .dot { background: var(--accent-magenta); }
+    .workflow-card:nth-child(3) h4 .dot { background: var(--accent-green); }
+
+    .workflow-card ul {
+      list-style: none;
+    }
+
+    .workflow-card ul li {
+      padding: 0.4rem 0;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .workflow-card ul li::before {
+      content: '→';
+      color: var(--accent-yellow);
+      flex-shrink: 0;
+    }
+
+    .slide.active .test-section,
+    .slide.active .workflow-card {
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .slide.active .test-section:nth-child(1),
+    .slide.active .workflow-card:nth-child(1) { animation-delay: 0.1s; }
+
+    .slide.active .test-section:nth-child(2),
+    .slide.active .workflow-card:nth-child(2) { animation-delay: 0.2s; }
+
+    .slide.active .workflow-card:nth-child(3) { animation-delay: 0.3s; }
+  </style>
+</head>
+<body>
+  <div class="progress-bar" id="progress"></div>
+
+  <div class="slideshow-container">
+    <!-- Slide 1: Title -->
+    <div class="slide slide-title active" data-slide="1">
+      <h1>Multi-Chat Demo</h1>
+      <p class="subtitle">A full-stack chatbot comparing multiple AI models in real-time</p>
+      <div class="tech-badges">
+        <span class="tech-badge">Django Ninja</span>
+        <span class="tech-badge">Next.js 16</span>
+        <span class="tech-badge">React 19</span>
+        <span class="tech-badge">TypeScript</span>
+        <span class="tech-badge">Claude API</span>
+        <span class="tech-badge">Ollama</span>
+      </div>
+    </div>
+
+    <!-- Slide 2: Architecture -->
+    <div class="slide" data-slide="2">
+      <div class="slide-header">
+        <h2>System Architecture</h2>
+        <p>Clean separation between frontend and backend</p>
+      </div>
+      <div class="architecture">
+        <div class="arch-box frontend">
+          <h3>Client</h3>
+          <h2>Next.js Frontend</h2>
+          <ul class="arch-list">
+            <li><span class="icon"></span>React 19 with TypeScript</li>
+            <li><span class="icon"></span>Tailwind CSS + DaisyUI</li>
+            <li><span class="icon"></span>Axios HTTP Client</li>
+            <li><span class="icon"></span>Session-based Auth</li>
+          </ul>
+        </div>
+        <div class="arch-arrow">
+          <span>REST API</span>
+          <svg viewBox="0 0 48 24" fill="none">
+            <path d="M0 12h44M36 4l10 8-10 8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg viewBox="0 0 48 24" fill="none" style="transform: rotate(180deg)">
+            <path d="M0 12h44M36 4l10 8-10 8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>JSON</span>
+        </div>
+        <div class="arch-box backend">
+          <h3>Server</h3>
+          <h2>Django Backend</h2>
+          <ul class="arch-list">
+            <li><span class="icon"></span>Django 5.2 + Django Ninja</li>
+            <li><span class="icon"></span>SQLite Database</li>
+            <li><span class="icon"></span>Anthropic SDK</li>
+            <li><span class="icon"></span>Ollama Integration</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Tech Stack -->
+    <div class="slide" data-slide="3">
+      <div class="slide-header">
+        <h2>Tech Stack</h2>
+        <p>Modern tools for rapid development</p>
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <div class="name">Django Ninja</div>
+          <div class="version">v1.5.0</div>
+          <div class="desc">Fast, type-safe REST API framework with automatic OpenAPI docs</div>
+        </div>
+        <div class="tech-card">
+          <div class="name">Next.js</div>
+          <div class="version">v16.0.6</div>
+          <div class="desc">React framework with App Router and server components</div>
+        </div>
+        <div class="tech-card">
+          <div class="name">React</div>
+          <div class="version">v19.2.0</div>
+          <div class="desc">Latest React with hooks and concurrent features</div>
+        </div>
+        <div class="tech-card">
+          <div class="name">TypeScript</div>
+          <div class="version">v5.x</div>
+          <div class="desc">Full type safety across the frontend codebase</div>
+        </div>
+        <div class="tech-card">
+          <div class="name">Tailwind CSS</div>
+          <div class="version">v3.4.18</div>
+          <div class="desc">Utility-first CSS with DaisyUI component library</div>
+        </div>
+        <div class="tech-card">
+          <div class="name">Python</div>
+          <div class="version">v3.13+</div>
+          <div class="desc">Latest Python with uv for fast dependency management</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Key Features -->
+    <div class="slide" data-slide="4">
+      <div class="slide-header">
+        <h2>Key Features</h2>
+        <p>What makes this demo interesting</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-content">
+            <h3>Multi-Model Comparison</h3>
+            <p>Chat with Claude and Ollama models simultaneously. Compare responses side-by-side in real-time.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔐</div>
+          <div class="feature-content">
+            <h3>User Authentication</h3>
+            <p>Session-based auth with profile management, avatar uploads, and password changes.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <div class="feature-content">
+            <h3>Conversation Management</h3>
+            <p>Create, rename, delete conversations. Context window tracks recent messages for continuity.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌙</div>
+          <div class="feature-content">
+            <h3>Modern UI/UX</h3>
+            <p>Dark mode, responsive design, loading states, and optimistic updates.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: AI Models -->
+    <div class="slide" data-slide="5">
+      <div class="slide-header">
+        <h2>Supported AI Models</h2>
+        <p>Cloud and local model support</p>
+      </div>
+      <div class="models-container">
+        <div class="model-group claude">
+          <h3><span class="dot"></span>Anthropic Claude</h3>
+          <div class="model-list">
+            <div class="model-item">
+              <span>claude-sonnet-4-5</span>
+              <span class="tag">BALANCED</span>
+            </div>
+            <div class="model-item">
+              <span>claude-haiku-4-5</span>
+              <span class="tag">FAST</span>
+            </div>
+            <div class="model-item">
+              <span>claude-opus-4-5</span>
+              <span class="tag">POWERFUL</span>
+            </div>
+          </div>
+        </div>
+        <div class="model-group ollama">
+          <h3><span class="dot"></span>Ollama (Local)</h3>
+          <div class="model-list">
+            <div class="model-item">
+              <span>ollama-llama3.2</span>
+              <span class="tag">META</span>
+            </div>
+            <div class="model-item">
+              <span>ollama-mistral</span>
+              <span class="tag">MISTRAL AI</span>
+            </div>
+            <div class="model-item">
+              <span>ollama-phi3</span>
+              <span class="tag">MICROSOFT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: API Endpoints -->
+    <div class="slide" data-slide="6">
+      <div class="slide-header">
+        <h2>REST API Design</h2>
+        <p>Clean, RESTful endpoints with automatic OpenAPI docs</p>
+      </div>
+      <div class="code-block">
+        <pre><span class="comment"># Authentication</span>
+<span class="keyword">POST</span> <span class="string">/api/auth/register</span>  <span class="comment"># Create account</span>
+<span class="keyword">POST</span> <span class="string">/api/auth/login</span>     <span class="comment"># Sign in</span>
+<span class="keyword">GET</span>  <span class="string">/api/auth/me</span>        <span class="comment"># Current user</span>
+
+<span class="comment"># Conversations</span>
+<span class="keyword">GET</span>  <span class="string">/api/chat/conversations</span>      <span class="comment"># List all</span>
+<span class="keyword">POST</span> <span class="string">/api/chat/conversations</span>      <span class="comment"># Create new</span>
+<span class="keyword">GET</span>  <span class="string">/api/chat/conversations/{id}</span>  <span class="comment"># Get with messages</span>
+
+<span class="comment"># Messages</span>
+<span class="keyword">POST</span> <span class="string">/api/chat/conversations/{id}/messages</span>
+     <span class="comment"># Send message → Get AI responses from all selected models</span></pre>
+      </div>
+    </div>
+
+    <!-- Slide 7: Testing Coverage -->
+    <div class="slide" data-slide="7">
+      <div class="slide-header">
+        <h2>Testing Coverage</h2>
+        <p>Comprehensive test suites for backend and frontend</p>
+      </div>
+      <div class="testing-container">
+        <div class="test-section backend">
+          <h3>Backend Tests <span class="badge">PYTEST</span></h3>
+          <div class="test-tools">
+            <span class="tool-tag">pytest</span>
+            <span class="tool-tag">pytest-django</span>
+            <span class="tool-tag">pytest-cov</span>
+            <span class="tool-tag">pytest-asyncio</span>
+          </div>
+          <ul class="test-files">
+            <li>test_models.py — Model validation & relationships</li>
+            <li>test_api.py — Chat API endpoints</li>
+            <li>test_auth_api.py — Authentication flows</li>
+            <li>test_chatbot.py — AI integration (mocked)</li>
+          </ul>
+          <div class="coverage-bar">
+            <div class="label">
+              <span>Line Coverage</span>
+              <span>>80%</span>
+            </div>
+            <div class="bar">
+              <div class="fill" style="width: 85%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="test-section frontend">
+          <h3>Frontend Tests <span class="badge">JEST</span></h3>
+          <div class="test-tools">
+            <span class="tool-tag">Jest</span>
+            <span class="tool-tag">React Testing Library</span>
+            <span class="tool-tag">jsdom</span>
+          </div>
+          <ul class="test-files">
+            <li>MessageInput.test.tsx — 12 tests</li>
+            <li>ChatWindow.test.tsx — 9 tests</li>
+            <li>api.test.ts — 16 API client tests</li>
+          </ul>
+          <div class="coverage-bar">
+            <div class="label">
+              <span>Line Coverage</span>
+              <span>>80%</span>
+            </div>
+            <div class="bar">
+              <div class="fill" style="width: 82%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: CI/CD Pipeline -->
+    <div class="slide" data-slide="8">
+      <div class="slide-header">
+        <h2>CI/CD Pipeline</h2>
+        <p>Automated testing with GitHub Actions</p>
+      </div>
+      <div class="pipeline-container">
+        <div class="pipeline-visual">
+          <div class="pipeline-stage trigger">
+            <div class="stage-icon">🔀</div>
+            <div class="stage-name">Push/PR</div>
+          </div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage test">
+            <div class="stage-icon">🧪</div>
+            <div class="stage-name">Test Suite</div>
+          </div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage test">
+            <div class="stage-icon">📊</div>
+            <div class="stage-name">Coverage</div>
+          </div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage report">
+            <div class="stage-icon">✅</div>
+            <div class="stage-name">Report</div>
+          </div>
+        </div>
+        <div class="workflow-details">
+          <div class="workflow-card">
+            <h4><span class="dot"></span>Triggers</h4>
+            <ul>
+              <li>Push to main branch</li>
+              <li>Pull request to main</li>
+              <li>Parallel job execution</li>
+            </ul>
+          </div>
+          <div class="workflow-card">
+            <h4><span class="dot"></span>Test Jobs</h4>
+            <ul>
+              <li>Backend: Python 3.13 + uv</li>
+              <li>Frontend: Node 18 + npm</li>
+              <li>Migration check validation</li>
+              <li>Coverage report generation</li>
+            </ul>
+          </div>
+          <div class="workflow-card">
+            <h4><span class="dot"></span>Reporting</h4>
+            <ul>
+              <li>Codecov integration</li>
+              <li>PR comment with coverage %</li>
+              <li>HTML reports as artifacts</li>
+              <li>Job summary dashboard</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: Thank You -->
+    <div class="slide thank-you" data-slide="9">
+      <h2>Thank You</h2>
+      <p>Questions? Let's discuss!</p>
+      <a href="#" class="repo-link">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+        multi-chat-demo
+      </a>
+    </div>
+  </div>
+
+  <div class="nav-controls">
+    <button class="nav-btn" id="prevBtn" disabled>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
+    <span class="slide-counter" id="counter">1 / 9</span>
+    <button class="nav-btn" id="nextBtn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 18l6-6-6-6"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="keyboard-hint">
+    <kbd>←</kbd> <kbd>→</kbd> or <kbd>Space</kbd> to navigate
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const counter = document.getElementById('counter');
+    const progress = document.getElementById('progress');
+    const totalSlides = slides.length;
+    let currentSlide = 0;
+
+    function updateSlide(direction = 'next') {
+      slides.forEach((slide, index) => {
+        slide.classList.remove('active', 'exit');
+        if (index === currentSlide) {
+          slide.classList.add('active');
+        } else if (direction === 'next' && index === currentSlide - 1) {
+          slide.classList.add('exit');
+        } else if (direction === 'prev' && index === currentSlide + 1) {
+          slide.classList.add('exit');
+        }
+      });
+
+      counter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+      progress.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+
+      prevBtn.disabled = currentSlide === 0;
+      nextBtn.disabled = currentSlide === totalSlides - 1;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        updateSlide('next');
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlide('prev');
+      }
+    }
+
+    nextBtn.addEventListener('click', nextSlide);
+    prevBtn.addEventListener('click', prevSlide);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      }
+    });
+
+    // Initialize
+    updateSlide();
+  </script>
+</body>
+</html>
