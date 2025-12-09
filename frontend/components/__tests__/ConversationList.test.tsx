@@ -136,6 +136,9 @@ describe('ConversationList', () => {
   });
 
   it('should handle invalid localStorage data gracefully', () => {
+    // Mock console.error to suppress expected error output
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     localStorage.setItem('defaultSelectedModels', 'invalid json');
 
     render(<ConversationList {...mockProps} />);
@@ -143,6 +146,15 @@ describe('ConversationList', () => {
     const button = screen.getByTestId('select-models-button');
     // Should fall back to default
     expect(button).toHaveTextContent('Claude 4.5 Sonnet');
+
+    // Verify that error was logged
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Failed to parse saved models:',
+      expect.any(Error)
+    );
+
+    // Restore console.error
+    consoleErrorSpy.mockRestore();
   });
 
   it('should handle empty array in localStorage', () => {
