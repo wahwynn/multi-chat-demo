@@ -4,34 +4,39 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 
 ## Prerequisites
 
-- Python 3.11+ with `uv` installed
+- Python 3.13+ with `uv` installed
 - Node.js 18+ with npm
 - Anthropic API key (get one at https://console.anthropic.com/)
 
 ## Backend Setup (Django)
 
 1. **Set up environment variables:**
+
    ```bash
    cp .env.example .env
    # Edit .env and add your ANTHROPIC_API_KEY
    ```
 
 2. **Install dependencies:**
+
    ```bash
    uv sync
    ```
 
 3. **Run migrations:**
+
    ```bash
    uv run python backend/manage.py migrate
    ```
 
 4. **Create a superuser (optional, for Django admin):**
+
    ```bash
    uv run python backend/manage.py createsuperuser
    ```
 
 5. **Run the development server:**
+
    ```bash
    uv run python backend/manage.py runserver
    ```
@@ -41,17 +46,20 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 ## Frontend Setup (Next.js)
 
 1. **Navigate to the frontend directory:**
+
    ```bash
    cd frontend
    ```
 
 2. **Set up environment variables:**
+
    ```bash
    cp .env.local.example .env.local
    # The default backend URL is already set to http://localhost:8000/api
    ```
 
 3. **Install dependencies:**
+
    ```bash
    npm install --legacy-peer-deps
    ```
@@ -59,6 +67,7 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
    Note: The `--legacy-peer-deps` flag is required due to a peer dependency conflict between React 19 and some testing libraries that expect React 18. This is safe to use and will not affect functionality.
 
 4. **Run the development server:**
+
    ```bash
    npm run dev
    ```
@@ -68,11 +77,13 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 ## Running the Application
 
 1. Start the Django backend in one terminal:
+
    ```bash
    uv run python backend/manage.py runserver
    ```
 
 2. Start the Next.js frontend in another terminal:
+
    ```bash
    cd frontend
    npm run dev
@@ -99,12 +110,14 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 ## Tech Stack
 
 ### Backend
+
 - Django 5.2
 - Django Ninja (API framework)
 - Anthropic Claude API
 - SQLite database
 
 ### Frontend
+
 - Next.js 16
 - React
 - TypeScript
@@ -114,6 +127,7 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 ## Development
 
 ### Backend Commands
+
 ```bash
 # Run tests
 uv run pytest
@@ -129,6 +143,7 @@ uv run python backend/manage.py migrate
 ```
 
 ### Frontend Commands
+
 ```bash
 # Run development server
 npm run dev

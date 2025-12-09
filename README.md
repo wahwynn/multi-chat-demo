@@ -38,7 +38,7 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend 
 
 ### Backend
 
-- **Framework**: Django 5.2.8 with Django Ninja (REST API)
+- **Framework**: Django 5.2 with Django Ninja (REST API)
 - **Language**: Python 3.13+
 - **AI Integration**:
   - Anthropic Claude API
@@ -157,10 +157,10 @@ uv run pytest --cov=chat --cov-report=html
 Run specific test files:
 
 ```bash
-uv run pytest backend/chat/test_models.py
-uv run pytest backend/chat/test_api.py
-uv run pytest backend/chat/test_auth_api.py
-uv run pytest backend/chat/test_chatbot.py
+uv run pytest backend/tests/test_models.py
+uv run pytest backend/tests/test_api.py
+uv run pytest backend/tests/test_auth_api.py
+uv run pytest backend/tests/test_chatbot.py
 ```
 
 ### Frontend Tests
