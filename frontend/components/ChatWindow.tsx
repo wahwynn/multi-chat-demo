@@ -38,7 +38,7 @@ export default function ChatWindow({ messages, expectedModelCount, selectedModel
     return groups;
   }, [messages]);
 
-  if (messages.length === 0) {
+  if (messages.length === 0 && !isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center px-4">
