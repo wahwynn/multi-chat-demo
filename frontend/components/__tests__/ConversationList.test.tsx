@@ -58,7 +58,7 @@ describe('ConversationList', () => {
     render(<ConversationList {...mockProps} />);
 
     const button = screen.getByTestId('select-models-button');
-    expect(button).toHaveTextContent('2 models selected');
+    expect(button).toHaveTextContent('Claude 4.5 Sonnet, Claude 4.5 Haiku');
   });
 
   it('should use default model when localStorage is empty', () => {
@@ -101,7 +101,7 @@ describe('ConversationList', () => {
     fireEvent.click(screen.getByTestId('model-checkbox-claude-opus-4-5'));
 
     await waitFor(() => {
-      expect(button).toHaveTextContent('3 models selected');
+      expect(button).toHaveTextContent('Claude 4.5 Sonnet, Claude 4.5 Haiku, Claude 4.5 Opus');
     });
   });
 
