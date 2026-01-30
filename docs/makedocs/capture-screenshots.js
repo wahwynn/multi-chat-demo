@@ -10,6 +10,10 @@
  * - npm install playwright
  * - Application must be running at http://localhost:3000
  * - Backend must be running at http://localhost:8000
+ * - A test user must exist with the credentials defined in TEST_USER below
+ *   (username: "testuser", password: "testpass123"). Create one with:
+ *     uv run python backend/manage.py createsuperuser --username testuser --email test@example.com
+ *   and set the password to "testpass123" when prompted.
  *
  * Usage:
  *   node docs/makedocs/capture-screenshots.js
@@ -99,6 +103,10 @@ async function ensureTestUser(context) {
 async function captureScreenshots() {
   console.log('Starting screenshot capture...');
   console.log(`Screenshots will be saved to: ${SCREENSHOT_DIR}`);
+  console.log('');
+  console.log(`⚠️  Make sure a test user exists with username "${TEST_USER.username}" and password "${TEST_USER.password}".`);
+  console.log('   Create one with: uv run python backend/manage.py createsuperuser --username testuser --email test@example.com');
+  console.log('');
 
   const browser = await chromium.launch({ headless: false }); // Set to true for headless mode
 

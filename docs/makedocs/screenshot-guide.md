@@ -26,13 +26,29 @@ The project includes an automated screenshot capture script that uses Playwright
    npm run dev
    ```
 
-2. **Run the screenshot script**:
+2. **Create the test user** (if one doesn't already exist):
+
+   The screenshot script expects a user with specific credentials. Create one via the Django management shell before running the script:
+
+   ```bash
+   uv run python backend/manage.py createsuperuser --username testuser --email test@example.com
+   # When prompted, set the password to: testpass123
+   ```
+
+   Alternatively, you can register the user through the app UI at `http://localhost:3000` using:
+   - **Username:** `testuser`
+   - **Email:** `test@example.com`
+   - **Password:** `testpass123`
+
+   > **Note:** The script will attempt to create this user automatically via the `/api/auth/register` endpoint, but if registration is disabled or the endpoint behaves differently, you should create the user manually.
+
+3. **Run the screenshot script**:
 
    ```bash
    node docs/makedocs/capture-screenshots.js
    ```
 
-3. **Screenshots will be saved** to `docs/screenshots/` directory with standardized filenames (see the [Screenshot Checklist](#screenshot-checklist) section below for the complete list).
+4. **Screenshots will be saved** to `docs/screenshots/` directory with standardized filenames (see the [Screenshot Checklist](#screenshot-checklist) section below for the complete list).
 
 ### How It Works
 
