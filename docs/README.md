@@ -4,9 +4,9 @@ Welcome to the Multi-Chat Demo documentation! This directory contains comprehens
 
 ## 📚 Documentation
 
-- **[User Guide](index.md)** - Complete user guide covering all features
-- **[Quick Start Guide](quick-start.md)** - Get started in minutes
-- **[FAQ](faq.md)** - Frequently asked questions
+- **[User Guide](index.html)** - Complete user guide covering all features
+- **[Quick Start Guide](quick-start.html)** - Get started in minutes
+- **[FAQ](faq.html)** - Frequently asked questions
 - **[Screenshot Guide](makedocs/screenshot-guide.md)** - Instructions for capturing screenshots (automated and manual)
 
 ## 🎥 Interactive Presentations
@@ -16,12 +16,13 @@ Welcome to the Multi-Chat Demo documentation! This directory contains comprehens
 
 ## 🚀 Quick Links
 
-- [Getting Started](index.md#getting-started)
-- [Authentication](index.md#authentication)
-- [Conversations](index.md#conversations)
-- [Chatting](index.md#chatting)
-- [Profile Management](index.md#profile-management)
-- [Troubleshooting](index.md#troubleshooting)
+- [Getting Started](index.html#getting-started)
+- [Authentication](index.html#authentication)
+- [Conversations](index.html#conversations)
+- [Selecting AI Models](index.html#selecting-ai-models)
+- [Chatting](index.html#chatting)
+- [Profile Management](index.html#profile-management)
+- [Troubleshooting](index.html#troubleshooting)
 
 ## 📸 Screenshots
 
@@ -29,9 +30,9 @@ All documentation screenshots are located in the [screenshots](screenshots/) dir
 
 ## 🔗 Related Documentation
 
-- [Setup Guide](../../README_SETUP.md) - Technical setup instructions
-- [Testing Documentation](../../TESTING.md) - Testing information
-- [Main README](../../README.md) - Project overview
+- [Setup Guide]({% if site.github.repository_url %}{{ site.github.repository_url }}/blob/main/README_SETUP.md{% else %}../../README_SETUP.md{% endif %}) - Technical setup instructions
+- [Testing Documentation]({% if site.github.repository_url %}{{ site.github.repository_url }}/blob/main/TESTING.md{% else %}../../TESTING.md{% endif %}) - Testing information
+- [Main README]({% if site.github.repository_url %}{{ site.github.repository_url }}/blob/main/README.md{% else %}../../README.md{% endif %}) - Project overview
 
 ## 🌐 GitHub Pages Setup
 

@@ -23,7 +23,7 @@ Multi-Chat Demo works best in modern browsers:
 
 ### How do I create an account?
 
-Click "Sign up" on the authentication page and fill in your username, email, and password. See the [Signing Up](index.md#signing-up) section for detailed instructions.
+Click "Sign up" on the authentication page and fill in your username, email, and password. See the [Signing Up](index.html#signing-up) section for detailed instructions.
 
 ### I forgot my password. How do I reset it?
 
@@ -63,7 +63,7 @@ Click the "Select Models" dropdown in the sidebar and check the boxes next to th
 
 ### How do I send a message?
 
-Type your message in the text area at the bottom and press Enter or click "Send". See [Sending Messages](index.md#sending-messages) for details.
+Type your message in the text area at the bottom and press Enter or click "Send". See [Sending Messages](index.html#sending-messages) for details.
 
 ### Can I edit or delete messages?
 
@@ -97,7 +97,7 @@ File upload functionality is not currently available. You can only send text mes
 
 ### How do I change my profile picture?
 
-Click your avatar → find the avatar section → click "Upload photo" → select an image. See [Uploading an Avatar](index.md#uploading-an-avatar) for details.
+Click your avatar → find the avatar section → click "Upload photo" → select an image. See [Uploading an Avatar](index.html#uploading-an-avatar) for details.
 
 ### What image formats are supported for avatars?
 
@@ -126,7 +126,7 @@ Yes! Click your avatar → "Edit profile" → change your email → "Save change
 2. Check the browser console (F12 → Console tab) for details
 3. Verify your API keys are configured (if you're an administrator)
 4. Try refreshing the page
-5. Check the [Troubleshooting](index.md#troubleshooting) section
+5. Check the [Troubleshooting](index.html#troubleshooting) section
 
 ### Messages aren't sending
 
@@ -213,9 +213,9 @@ There's no built-in limit, but very long conversations may take longer to load.
 
 ### Where can I get more help?
 
-1. Check the [Full User Guide](index.md)
-2. Review the [Troubleshooting](index.md#troubleshooting) section
-3. Check the [Setup Guide](../../README_SETUP.md) for technical details
+1. Check the [Full User Guide](index.html)
+2. Review the [Troubleshooting](index.html#troubleshooting) section
+3. Check the [Setup Guide]({% if site.github.repository_url %}{{ site.github.repository_url }}/blob/main/README_SETUP.md{% else %}../../README_SETUP.md{% endif %}) for technical details
 4. Contact your administrator
 
 ### How do I report a bug?
@@ -234,4 +234,4 @@ Feature requests should be directed to your administrator or the development tea
 
 ---
 
-**Don't see your question?** Check the [Full User Guide](index.md) or contact your administrator.
+**Don't see your question?** Check the [Full User Guide](index.html) or contact your administrator.

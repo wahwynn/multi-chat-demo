@@ -337,7 +337,7 @@ If you continue to experience issues:
 1. Check that both the backend and frontend servers are running
 2. Check your browser's console for error messages
 3. Verify your API keys are configured correctly (for administrators)
-4. Review the setup documentation in [README_SETUP.md](../../README_SETUP.md)
+4. Review the setup documentation in the [Setup Guide]({% if site.github.repository_url %}{{ site.github.repository_url }}/blob/main/README_SETUP.md{% else %}../../README_SETUP.md{% endif %})
 
 ## Keyboard Shortcuts
 
@@ -356,4 +356,4 @@ If you continue to experience issues:
 
 ---
 
-**Need more help?** Check out the [Setup Guide](../../README_SETUP.md) or [Testing Documentation](../../TESTING.md) for technical details.
+**Need more help?** Check out the [Setup Guide]({% if site.github.repository_url %}{{ site.github.repository_url }}/blob/main/README_SETUP.md{% else %}../../README_SETUP.md{% endif %}) or [Testing Documentation]({% if site.github.repository_url %}{{ site.github.repository_url }}/blob/main/TESTING.md{% else %}../../TESTING.md{% endif %}) for technical details.

@@ -25,7 +25,7 @@ Get up and running with Multi-Chat Demo in minutes!
 
 ![New conversation](screenshots/04-new-conversation.png)
 
-**Note:** Available models depend on your setup—Claude (API key), Ollama (running locally), or GitHub Models (API key). Only configured providers appear. See the [Full User Guide](index.md#selecting-ai-models) for details.
+**Note:** Available models depend on your setup—Claude (API key), Ollama (running locally), or GitHub Models (API key). Only configured providers appear. See the [Full User Guide](index.html#selecting-ai-models) for details.
 
 ### 3. Start Chatting
 
@@ -43,10 +43,10 @@ Get up and running with Multi-Chat Demo in minutes!
 
 ## What's Next?
 
-- Read the [Full User Guide](index.md) for detailed instructions
-- Explore [Profile Management](index.md#profile-management) to customize your account
-- Check out [Keyboard Shortcuts](index.md#keyboard-shortcuts) to work faster
+- Read the [Full User Guide](index.html) for detailed instructions
+- Explore [Profile Management](index.html#profile-management) to customize your account
+- Check out [Keyboard Shortcuts](index.html#keyboard-shortcuts) to work faster
 
 ---
 
-**Having trouble?** See the [Troubleshooting](index.md#troubleshooting) section in the main guide.
+**Having trouble?** See the [Troubleshooting](index.html#troubleshooting) section in the main guide.
