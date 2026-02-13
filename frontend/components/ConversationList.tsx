@@ -1,6 +1,6 @@
 'use client';
 
-import { Conversation, MODEL_OPTIONS } from '@/lib/types';
+import { Conversation, MODEL_OPTIONS, ModelOption } from '@/lib/types';
 import { useState, useRef, useEffect } from 'react';
 
 interface ConversationListProps {
@@ -10,6 +10,7 @@ interface ConversationListProps {
   onNew: (models: string[]) => void;  // Changed to accept array
   onDelete: (id: number) => void;
   onRename: (id: number, newTitle: string) => void;
+  modelOptions: ModelOption[];  // Available models (filtered by API keys)
 }
 
 export default function ConversationList({
@@ -19,25 +20,56 @@ export default function ConversationList({
   onNew,
   onDelete,
   onRename,
+  modelOptions,
 }: ConversationListProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  // Load default models from localStorage or use default
+
   const [selectedModels, setSelectedModels] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return ['claude-sonnet-4-5'];
-    const savedModels = localStorage.getItem('defaultSelectedModels');
-    if (savedModels) {
+    if (modelOptions.length === 0) return [];
+    const saved =
+      typeof window !== 'undefined' ? localStorage.getItem('defaultSelectedModels') : null;
+    if (saved) {
       try {
-        const parsed = JSON.parse(savedModels);
+        const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          const availableSet = new Set(modelOptions.map((m) => m.value));
+          const filtered = parsed.filter((m: string) => availableSet.has(m));
+          if (filtered.length > 0) return filtered;
         }
-      } catch (e) {
-        console.error('Failed to parse saved models:', e);
+      } catch {
+        /* ignore */
       }
     }
-    return ['claude-sonnet-4-5'];
+    return [modelOptions[0].value];
   });
+
+  // Re-sync when modelOptions loads (e.g. from empty to populated) or when options change
+  useEffect(() => {
+    if (modelOptions.length === 0) return;
+    const availableSet = new Set(modelOptions.map((m) => m.value));
+    // Sync selectedModels with localStorage + available models when options load
+    // eslint-disable-next-line -- intentional: sync state when modelOptions (external data) loads
+    setSelectedModels((prev) => {
+      const valid = prev.filter((m) => availableSet.has(m));
+      if (valid.length > 0) return valid;
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('defaultSelectedModels');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+              const filtered = parsed.filter((m: string) => availableSet.has(m));
+              if (filtered.length > 0) return filtered;
+            }
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+      return [modelOptions[0].value];
+    });
+  }, [modelOptions]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<Conversation | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -138,10 +170,12 @@ export default function ConversationList({
               className="btn btn-outline w-full justify-between"
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
-              <span className="truncate">
-                {selectedModels.length === 0
-                  ? 'Select models...'
-                  : selectedModels.map(m => MODEL_OPTIONS.find(opt => opt.value === m)?.label || m).join(', ')}
+              <span className={`truncate ${modelOptions.length === 0 ? 'text-error' : ''}`}>
+                {modelOptions.length === 0
+                  ? 'No models available'
+                  : selectedModels.length === 0
+                    ? 'Select models...'
+                    : selectedModels.map(m => modelOptions.find(opt => opt.value === m)?.label || m).join(', ')}
               </span>
               <svg
                 className={`h-4 w-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
@@ -154,20 +188,26 @@ export default function ConversationList({
             </button>
             {dropdownOpen && (
               <ul className="absolute left-0 right-0 top-full mt-1 bg-base-100 rounded-box z-50 p-2 shadow-lg border border-base-300">
-                {MODEL_OPTIONS.map((option) => (
-                  <li key={option.value} className="list-none">
-                    <label className="flex items-center cursor-pointer gap-3 py-2 px-2 hover:bg-base-200 rounded-lg">
-                      <input
-                        type="checkbox"
-                        checked={selectedModels.includes(option.value)}
-                        onChange={() => handleModelToggle(option.value)}
-                        data-testid={`model-checkbox-${option.value}`}
-                        className="checkbox checkbox-sm border-2 border-base-content/60 bg-base-100"
-                      />
-                      <span className="label-text">{option.label}</span>
-                    </label>
+                {modelOptions.length === 0 ? (
+                  <li className="list-none py-3 px-2 text-error text-sm" data-testid="no-models-error">
+                    No models available. Configure at least one provider: set ANTHROPIC_API_KEY, GITHUB_API_KEY, or run Ollama.
                   </li>
-                ))}
+                ) : (
+                  modelOptions.map((option) => (
+                    <li key={option.value} className="list-none">
+                      <label className="flex items-center cursor-pointer gap-3 py-2 px-2 hover:bg-base-200 rounded-lg">
+                        <input
+                          type="checkbox"
+                          checked={selectedModels.includes(option.value)}
+                          onChange={() => handleModelToggle(option.value)}
+                          data-testid={`model-checkbox-${option.value}`}
+                          className="checkbox checkbox-sm border-2 border-base-content/60 bg-base-100"
+                        />
+                        <span className="label-text">{option.label}</span>
+                      </label>
+                    </li>
+                  ))
+                )}
               </ul>
             )}
           </div>
@@ -218,7 +258,7 @@ export default function ConversationList({
                     {conv.selected_models.length} model{conv.selected_models.length > 1 ? 's' : ''}
                   </p>
                   <p className="text-xs opacity-60 mb-1 break-words">
-                    {conv.selected_models.map(m => MODEL_OPTIONS.find(opt => opt.value === m)?.label || m).join(', ')}
+                    {conv.selected_models.map(m => modelOptions.find(opt => opt.value === m)?.label || MODEL_OPTIONS.find(opt => opt.value === m)?.label || m).join(', ')}
                   </p>
                   <p className="text-sm opacity-60">
                     {new Date(conv.updated_at).toLocaleString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
@@ -251,7 +291,11 @@ export default function ConversationList({
       </div>
 
       {/* Delete Confirmation Modal */}
-      <dialog className={`modal ${deleteModalOpen ? 'modal-open' : ''}`}>
+      <dialog
+        className={`modal ${deleteModalOpen ? 'modal-open' : ''}`}
+        data-testid="delete-conversation-modal"
+        aria-label="Delete conversation"
+      >
         <div className="modal-box">
           <h3 className="font-bold text-xl mb-4">Delete Conversation</h3>
           <p className="py-4 text-base leading-relaxed">

@@ -233,6 +233,23 @@ describe('chatApi', () => {
     jest.clearAllMocks()
   })
 
+  describe('getAvailableModels', () => {
+    it('should fetch available models', async () => {
+      const mockResponse = {
+        data: [
+          { value: 'claude-sonnet-4-5', label: 'Claude 4.5 Sonnet' },
+          { value: 'ollama-llama3.2', label: 'Ollama Llama 3.2' },
+        ],
+      }
+      getMockInstance().get.mockResolvedValue(mockResponse)
+
+      const result = await chatApi.getAvailableModels()
+
+      expect(getMockInstance().get).toHaveBeenCalledWith('/chat/models')
+      expect(result).toEqual(mockResponse.data)
+    })
+  })
+
   describe('getConversations', () => {
     it('should fetch all conversations', async () => {
       const mockResponse = {

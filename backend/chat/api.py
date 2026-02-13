@@ -13,7 +13,13 @@ from .schemas import (
     SendMessageSchema,
     ChatResponseSchema,
 )
-from .chatbot import get_multi_model_responses
+from .chatbot import (
+    get_multi_model_responses,
+    get_available_models,
+    get_unavailable_model_reasons,
+    MODEL_LABELS,
+)
+from .schemas import ModelOptionSchema
 
 router = Router()
 
@@ -29,6 +35,21 @@ def get_authenticated_user(request: HttpRequest):
     if request.user.is_authenticated:
         return request.user
     raise AuthenticationRequired("Authentication required")
+
+
+@router.get("/models", response={200: List[ModelOptionSchema], 401: dict})
+def list_available_models(request: HttpRequest):
+    """List AI models that are enabled based on configured API keys"""
+    try:
+        get_authenticated_user(request)
+    except AuthenticationRequired:
+        return 401, {"error": "Authentication required"}
+    models = get_available_models(
+        anthropic_api_key=getattr(settings, "ANTHROPIC_API_KEY", "") or "",
+        github_api_key=getattr(settings, "GITHUB_API_KEY", "") or "",
+        ollama_base_url=getattr(settings, "OLLAMA_BASE_URL", "http://localhost:11434"),
+    )
+    return 200, models
 
 
 @router.get("/conversations", response={200: List[ConversationListSchema], 401: dict})
@@ -53,6 +74,32 @@ def create_conversation(request: HttpRequest, payload: CreateConversationSchema)
     # Validate at least 1 model
     if not payload.selected_models:
         return 400, {"error": "Must select at least 1 model"}
+
+    # Validate all selected models are enabled (API keys configured, Ollama models installed)
+    available_values = {
+        m["value"]
+        for m in get_available_models(
+            anthropic_api_key=getattr(settings, "ANTHROPIC_API_KEY", "") or "",
+            github_api_key=getattr(settings, "GITHUB_API_KEY", "") or "",
+            ollama_base_url=getattr(
+                settings, "OLLAMA_BASE_URL", "http://localhost:11434"
+            ),
+        )
+    }
+    invalid = [m for m in payload.selected_models if m not in available_values]
+    if invalid:
+        unavailable = get_unavailable_model_reasons(
+            invalid,
+            anthropic_api_key=getattr(settings, "ANTHROPIC_API_KEY", "") or "",
+            github_api_key=getattr(settings, "GITHUB_API_KEY", "") or "",
+            ollama_base_url=getattr(
+                settings, "OLLAMA_BASE_URL", "http://localhost:11434"
+            ),
+        )
+        details = "; ".join(
+            f"{MODEL_LABELS.get(m, m)}: {reason}" for m, reason in unavailable
+        )
+        return 400, {"error": f"Models not available. {details}"}
 
     conversation = Conversation.objects.create(
         title=payload.title,
@@ -118,7 +165,7 @@ def delete_conversation(request: HttpRequest, conversation_id: int):
 
 @router.post(
     "/conversations/{conversation_id}/messages",
-    response={200: ChatResponseSchema, 401: dict},
+    response={200: ChatResponseSchema, 400: dict, 401: dict},
 )
 async def send_message(
     request: HttpRequest, conversation_id: int, payload: SendMessageSchema
@@ -178,12 +225,40 @@ async def send_message(
         get_recent_messages
     )()
 
+    # Filter to only models that are enabled (have API keys configured)
+    available_values = {
+        m["value"]
+        for m in get_available_models(
+            anthropic_api_key=getattr(settings, "ANTHROPIC_API_KEY", "") or "",
+            github_api_key=getattr(settings, "GITHUB_API_KEY", "") or "",
+            ollama_base_url=getattr(
+                settings, "OLLAMA_BASE_URL", "http://localhost:11434"
+            ),
+        )
+    }
+    models_to_query = [m for m in conversation.selected_models if m in available_values]
+
+    if not models_to_query:
+        unavailable = get_unavailable_model_reasons(
+            conversation.selected_models,
+            anthropic_api_key=getattr(settings, "ANTHROPIC_API_KEY", "") or "",
+            github_api_key=getattr(settings, "GITHUB_API_KEY", "") or "",
+            ollama_base_url=getattr(
+                settings, "OLLAMA_BASE_URL", "http://localhost:11434"
+            ),
+        )
+        details = "; ".join(
+            f"{MODEL_LABELS.get(m, m)}: {reason}" for m, reason in unavailable
+        )
+        return 400, {"error": f"None of the selected models are available. {details}"}
+
     # Get responses from all selected models in parallel
     model_responses = await get_multi_model_responses(
         previous_messages,
-        conversation.selected_models,
+        models_to_query,
         settings.ANTHROPIC_API_KEY,
         settings.OLLAMA_BASE_URL,
+        getattr(settings, "GITHUB_API_KEY", ""),
     )
 
     # Create assistant messages for each model response

@@ -110,11 +110,13 @@ You can select multiple AI models to compare their responses:
 
 _The model selection dropdown with multiple models selected_
 
-Available models may include:
+**Optional model detection:** The list of available models is detected dynamically based on your administrator's configuration. All model providers are optional—only models whose provider is configured will appear in the dropdown:
 
-- Claude Sonnet 4.5
-- Ollama models
-- Other configured AI models
+- **Claude models** — when `ANTHROPIC_API_KEY` is configured (Claude 4.5 Sonnet, Haiku, Opus)
+- **Ollama models** — when Ollama is running; only models you have installed locally appear (e.g., Llama 3.2, Mistral)
+- **GitHub Models** — when `GITHUB_API_KEY` is configured (GPT-4.1, GPT-4o, GPT-4o Mini, Llama 3.2 90B Vision)
+
+The model list can change over time: if you add an API key, start Ollama, or install new Ollama models, refresh the page to see the updated options. If no providers are configured, you'll see "No models available" until at least one is set up.
 
 ### Renaming Conversations
 
@@ -322,6 +324,12 @@ _The sign out option in the profile menu_
 - Confirm the deletion in the dialog that appears
 - Refresh the page if the issue persists
 
+**No models available / models disappeared**
+
+- The model list is detected dynamically. Ensure at least one provider is configured: `ANTHROPIC_API_KEY`, `GITHUB_API_KEY`, or a running Ollama instance
+- For Ollama, only models you've installed (e.g., `ollama pull llama3.2`) will appear
+- Refresh the page after adding API keys or starting Ollama
+
 ### Getting Help
 
 If you continue to experience issues:
@@ -329,7 +337,7 @@ If you continue to experience issues:
 1. Check that both the backend and frontend servers are running
 2. Check your browser's console for error messages
 3. Verify your API keys are configured correctly (for administrators)
-4. Review the setup documentation in [README_SETUP.md](../../README_SETUP.md)
+4. Review the setup documentation in the [Setup Guide]({% if site.github.repository_url %}{{ site.github.repository_url }}/blob/main/README_SETUP.md{% else %}../../README_SETUP.md{% endif %})
 
 ## Keyboard Shortcuts
 
@@ -348,4 +356,4 @@ If you continue to experience issues:
 
 ---
 
-**Need more help?** Check out the [Setup Guide](../../README_SETUP.md) or [Testing Documentation](../../TESTING.md) for technical details.
+**Need more help?** Check out the [Setup Guide]({% if site.github.repository_url %}{{ site.github.repository_url }}/blob/main/README_SETUP.md{% else %}../../README_SETUP.md{% endif %}) or [Testing Documentation]({% if site.github.repository_url %}{{ site.github.repository_url }}/blob/main/TESTING.md{% else %}../../TESTING.md{% endif %}) for technical details.

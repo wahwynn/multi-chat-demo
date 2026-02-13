@@ -36,9 +36,18 @@ export const MODEL_OPTIONS = [
   { value: 'ollama-llama3.1', label: 'Ollama Llama 3.1' },
   { value: 'ollama-mistral', label: 'Ollama Mistral' },
   { value: 'ollama-phi3', label: 'Ollama Phi-3' },
+  { value: 'github-openai/gpt-4.1', label: 'GitHub GPT-4.1' },
+  { value: 'github-openai/gpt-4o-mini', label: 'GitHub GPT-4o Mini' },
+  { value: 'github-openai/gpt-4o', label: 'GitHub GPT-4o' },
+  { value: 'github-meta/llama-3.2-90b-vision-instruct', label: 'GitHub Llama 3.2 90B Vision' },
 ];
 
 export interface ChatResponse {
   message: Message;  // User message
   assistant_messages: Message[];  // Multiple responses (one per model)
+}
+
+export interface ModelOption {
+  value: string;
+  label: string;
 }

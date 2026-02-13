@@ -39,7 +39,7 @@ For new contributors or fresh clones:
 
 ```bash
 # Backend setup
-# 1. Copy environment file and add ANTHROPIC_API_KEY
+# 1. Copy environment file (optionally add ANTHROPIC_API_KEY for Claude models)
 cp .env.example .env
 
 # 2. Sync dependencies
@@ -73,6 +73,7 @@ npm run dev
   - `admin.py`: Django admin configuration for models
 
 **Key Backend Patterns**:
+
 - CORS is configured to allow requests from Next.js frontend (localhost:3000)
 - Messages are stored with conversation history for context-aware responses
 - The Anthropic API key is loaded from environment variables via `python-dotenv`
@@ -93,6 +94,7 @@ npm run dev
     - `types.ts`: TypeScript interfaces matching backend schemas
 
 **Key Frontend Patterns**:
+
 - Client-side rendering with React hooks for state management
 - Optimistic UI updates with error handling
 - Auto-scrolling chat window
@@ -110,6 +112,7 @@ npm run dev
 ## Development Workflow
 
 ### Backend Development
+
 - All Python dependencies must be managed through `uv add` and `uv remove`
 - Use `uv run` to execute Python scripts and tools
 - Run `uv run python backend/manage.py makemigrations` after model changes
@@ -117,6 +120,7 @@ npm run dev
 - Access Django admin at http://localhost:8000/admin
 
 ### Frontend Development
+
 - Run `npm run dev` for development server with hot reload
 - Run `npm run build` to check for TypeScript/build errors
 - Run `npm run lint` to check for linting issues
@@ -125,27 +129,37 @@ npm run dev
 
 All endpoints are available at `http://localhost:8000/api/chat/`:
 
+- `GET /models` - List available models (detected dynamically from API keys and Ollama; returns `[{value, label}]`)
 - `GET /conversations` - List all conversations
 - `POST /conversations` - Create a new conversation (body: `{title: string}`)
 - `GET /conversations/{id}` - Get conversation with all messages
 - `DELETE /conversations/{id}` - Delete a conversation
 - `POST /conversations/{id}/messages` - Send message and get AI response (body: `{content: string}`)
 
+Model availability is optional: Claude (ANTHROPIC_API_KEY), Ollama (running instance + installed models), GitHub Models (GITHUB_API_KEY). The model list can change when configuration changes.
+
 Django Ninja provides automatic API documentation at `http://localhost:8000/api/docs`
 
 ## Environment Variables
 
 ### Backend (.env)
-- `ANTHROPIC_API_KEY`: Your Anthropic API key for Claude integration (required)
+
+All AI model providers are optional. Model availability depends on configured API keys or running services:
+
+- `ANTHROPIC_API_KEY`: Anthropic API key (optional; enables Claude models when set)
+- `GITHUB_API_KEY`: GitHub fine-grained PAT with `models: read` scope (optional; enables GitHub Models when set)
+- `OLLAMA_BASE_URL`: Ollama API base URL (optional; enables Ollama models when Ollama is running; default: http://localhost:11434)
 - `SECRET_KEY`: Django secret key (auto-generated, keep secure in production)
 - `DEBUG`: Django debug mode (set to False in production)
 
 ### Frontend (.env.local)
+
 - `NEXT_PUBLIC_API_URL`: Backend API URL (default: http://localhost:8000/api)
 
 ## Project Configuration
 
 The `.gitignore` is configured for:
+
 - Python build artifacts, caches, and virtual environments
 - Node.js modules and build outputs
 - Environment files (.env, .env.local)

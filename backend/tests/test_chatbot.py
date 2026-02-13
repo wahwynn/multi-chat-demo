@@ -2,6 +2,12 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from chat.chatbot import (
     is_ollama_model,
+    is_github_model,
+    get_github_model_id,
+    check_ollama_available,
+    get_ollama_installed_models,
+    get_available_models,
+    get_unavailable_model_reasons,
     get_single_model_response_async,
     get_multi_model_responses,
 )
@@ -21,6 +27,171 @@ class TestChatbotHelpers:
         assert is_ollama_model("claude-sonnet-4-5") is False
         assert is_ollama_model("claude-haiku-4-5") is False
         assert is_ollama_model("claude-opus-4-5") is False
+
+    def test_is_github_model_true(self):
+        """Test that GitHub models are correctly identified"""
+        assert is_github_model("github-openai/gpt-4.1") is True
+        assert is_github_model("github-meta/llama-3.2-90b-vision-instruct") is True
+
+    def test_is_github_model_false(self):
+        """Test that non-GitHub models are not identified as GitHub"""
+        assert is_github_model("claude-sonnet-4-5") is False
+        assert is_github_model("ollama-llama3.2") is False
+
+    def test_get_github_model_id(self):
+        """Test that GitHub model ID prefix is stripped correctly"""
+        assert get_github_model_id("github-openai/gpt-4.1") == "openai/gpt-4.1"
+        assert (
+            get_github_model_id("github-meta/llama-3.2-90b-vision-instruct")
+            == "meta/llama-3.2-90b-vision-instruct"
+        )
+
+    def test_check_ollama_available_when_running(self):
+        """Test that check_ollama_available returns True when Ollama responds"""
+        with patch("chat.chatbot.httpx.Client") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_client.return_value.__enter__.return_value.get.return_value = (
+                mock_response
+            )
+            assert check_ollama_available("http://localhost:11434") is True
+
+    def test_check_ollama_available_when_not_running(self):
+        """Test that check_ollama_available returns False when Ollama is unreachable"""
+        with patch("chat.chatbot.httpx.Client") as mock_client:
+            mock_client.return_value.__enter__.return_value.get.side_effect = Exception(
+                "Connection refused"
+            )
+            assert check_ollama_available("http://localhost:11434") is False
+
+    def test_get_available_models_includes_ollama_when_available(self):
+        """Test that Ollama models are included when Ollama is running and installed"""
+        installed = {"llama3.2", "llama3.1", "mistral", "phi3"}
+        with (
+            patch("chat.chatbot.check_ollama_available", return_value=True),
+            patch("chat.chatbot.get_ollama_installed_models", return_value=installed),
+        ):
+            models = get_available_models(
+                anthropic_api_key="",
+                github_api_key="",
+            )
+        values = [m["value"] for m in models]
+        assert "ollama-llama3.2" in values
+
+    def test_get_available_models_excludes_uninstalled_ollama_models(self):
+        """Test that Ollama models not installed are excluded from available list"""
+        installed = {"mistral"}  # llama3.2 not installed
+        with (
+            patch("chat.chatbot.check_ollama_available", return_value=True),
+            patch("chat.chatbot.get_ollama_installed_models", return_value=installed),
+        ):
+            models = get_available_models(
+                anthropic_api_key="",
+                github_api_key="",
+            )
+        values = [m["value"] for m in models]
+        assert "ollama-mistral" in values
+        assert "ollama-llama3.2" not in values
+
+    def test_get_available_models_excludes_ollama_when_unavailable(self):
+        """Test that Ollama models are excluded when Ollama is not running"""
+        with patch("chat.chatbot.check_ollama_available", return_value=False):
+            models = get_available_models(
+                anthropic_api_key="",
+                github_api_key="",
+            )
+        values = [m["value"] for m in models]
+        assert "ollama-llama3.2" not in values
+
+    def test_get_ollama_installed_models_non_200_response(self):
+        """Test get_ollama_installed_models returns empty set when status != 200"""
+        with patch("chat.chatbot.httpx.Client") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 500
+            mock_client.return_value.__enter__.return_value.get.return_value = (
+                mock_response
+            )
+            result = get_ollama_installed_models("http://localhost:11434")
+        assert result == set()
+
+    def test_get_ollama_installed_models_exception(self):
+        """Test get_ollama_installed_models returns empty set on exception"""
+        with patch("chat.chatbot.httpx.Client") as mock_client:
+            mock_client.return_value.__enter__.return_value.get.side_effect = Exception(
+                "Connection error"
+            )
+            result = get_ollama_installed_models("http://localhost:11434")
+        assert result == set()
+
+    def test_get_ollama_installed_models_success(self):
+        """Test get_ollama_installed_models returns model names"""
+        with patch("chat.chatbot.httpx.Client") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "models": [
+                    {"name": "llama3.2:latest"},
+                    {"name": "mistral"},
+                ]
+            }
+            mock_client.return_value.__enter__.return_value.get.return_value = (
+                mock_response
+            )
+            result = get_ollama_installed_models("http://localhost:11434")
+        assert "llama3.2" in result
+        assert "mistral" in result
+
+    def test_get_unavailable_model_reasons_claude_no_key(self):
+        """Test get_unavailable_model_reasons for Claude without API key"""
+        reasons = get_unavailable_model_reasons(
+            ["claude-sonnet-4-5"],
+            anthropic_api_key="",
+            github_api_key="",
+        )
+        assert len(reasons) == 1
+        assert reasons[0][0] == "claude-sonnet-4-5"
+        assert "ANTHROPIC_API_KEY" in reasons[0][1]
+
+    def test_get_unavailable_model_reasons_github_no_key(self):
+        """Test get_unavailable_model_reasons for GitHub model without API key"""
+        reasons = get_unavailable_model_reasons(
+            ["github-openai/gpt-4.1"],
+            anthropic_api_key="",
+            github_api_key="",
+        )
+        assert len(reasons) == 1
+        assert reasons[0][0] == "github-openai/gpt-4.1"
+        assert "GITHUB_API_KEY" in reasons[0][1]
+
+    def test_get_unavailable_model_reasons_unknown_model(self):
+        """Test get_unavailable_model_reasons for unknown model"""
+        reasons = get_unavailable_model_reasons(
+            ["unknown-model-xyz"],
+            anthropic_api_key="key",
+            github_api_key="key",
+        )
+        assert len(reasons) == 1
+        assert reasons[0][0] == "unknown-model-xyz"
+        assert "not available" in reasons[0][1]
+
+    def test_get_unavailable_model_reasons_ollama_not_installed(self):
+        """Test get_unavailable_model_reasons when Ollama model not installed (line 109)"""
+        with (
+            patch("chat.chatbot.check_ollama_available", return_value=True),
+            patch(
+                "chat.chatbot.get_ollama_installed_models",
+                return_value={"mistral"},
+            ),
+        ):
+            reasons = get_unavailable_model_reasons(
+                ["ollama-llama3.2"],
+                anthropic_api_key="",
+                github_api_key="",
+            )
+        assert len(reasons) == 1
+        assert reasons[0][0] == "ollama-llama3.2"
+        assert "not installed" in reasons[0][1]
+        assert "ollama pull" in reasons[0][1]
 
 
 @pytest.mark.asyncio
@@ -103,6 +274,80 @@ class TestChatbotAPI:
 
             assert result[0] == "claude-sonnet-4-5"
             assert "Claude" in result[1]
+
+    async def test_get_single_model_response_github_no_api_key(self, sample_messages):
+        """Test GitHub model returns error when no API key is configured"""
+        result = await get_single_model_response_async(
+            sample_messages,
+            "github-openai/gpt-4.1",
+            "dummy-key",
+            github_api_key="",
+        )
+        assert result[0] == "github-openai/gpt-4.1"
+        assert "GITHUB_API_KEY" in result[1]
+        assert "models: read" in result[1]
+
+    async def test_get_single_model_response_github_success(self, sample_messages):
+        """Test successful GitHub model response"""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "choices": [
+                {"message": {"content": "Hello! I'm GPT-4.1.", "role": "assistant"}}
+            ]
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_client_instance = AsyncMock()
+            mock_client_instance.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+            mock_client.return_value = mock_client_instance
+
+            result = await get_single_model_response_async(
+                sample_messages,
+                "github-openai/gpt-4.1",
+                "dummy-key",
+                github_api_key="ghp_test",
+            )
+
+            assert result[0] == "github-openai/gpt-4.1"
+            assert "GPT-4.1" in result[1]
+
+    async def test_get_single_model_response_github_empty_response(
+        self, sample_messages
+    ):
+        """Test GitHub model response with empty choices (line 234)"""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"choices": []}
+        mock_response.raise_for_status = MagicMock()
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_client_instance = AsyncMock()
+            mock_client_instance.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+            mock_client.return_value = mock_client_instance
+
+            result = await get_single_model_response_async(
+                sample_messages,
+                "github-openai/gpt-4.1",
+                "dummy-key",
+                github_api_key="ghp_test",
+            )
+
+            assert result[0] == "github-openai/gpt-4.1"
+            assert "didn't contain any text content" in result[1]
+
+    async def test_get_single_model_response_claude_no_api_key(self, sample_messages):
+        """Test Claude model returns error when API key is empty (line 245)"""
+        result = await get_single_model_response_async(
+            sample_messages,
+            "claude-sonnet-4-5",
+            "",
+        )
+        assert result[0] == "claude-sonnet-4-5"
+        assert "ANTHROPIC_API_KEY" in result[1]
 
     async def test_get_single_model_response_claude_empty_response(
         self, sample_messages

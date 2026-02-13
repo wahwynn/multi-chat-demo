@@ -1,5 +1,7 @@
 import pytest
+from unittest.mock import patch
 from django.contrib.auth.models import User
+from django.test import override_settings
 from chat.models import Conversation, Message
 
 
@@ -34,6 +36,77 @@ class TestChatAPI:
         )
         api_client.force_login(user)
         return api_client, user
+
+    def test_list_models_unauthenticated(self, api_client):
+        """Test listing models without authentication"""
+        response = api_client.get("/api/chat/models")
+        assert response.status_code == 401
+
+    def test_list_models_authenticated(self, authenticated_client):
+        """Test listing available models based on API keys"""
+        client, _ = authenticated_client
+        installed = {"llama3.2", "llama3.1", "mistral", "phi3"}
+        with (
+            override_settings(ANTHROPIC_API_KEY="test-key", GITHUB_API_KEY=""),
+            patch("chat.chatbot.check_ollama_available", return_value=True),
+            patch("chat.chatbot.get_ollama_installed_models", return_value=installed),
+        ):
+            response = client.get("/api/chat/models")
+        assert response.status_code == 200
+        data = response.json()
+        model_values = [m["value"] for m in data]
+        assert "claude-sonnet-4-5" in model_values
+        assert "ollama-llama3.2" in model_values
+        assert "github-openai/gpt-4.1" not in model_values
+
+    def test_list_models_without_anthropic_key(self, authenticated_client):
+        """Test that Claude models are excluded when ANTHROPIC_API_KEY is missing"""
+        client, _ = authenticated_client
+        installed = {"llama3.2", "llama3.1", "mistral", "phi3"}
+        with (
+            override_settings(ANTHROPIC_API_KEY="", GITHUB_API_KEY=""),
+            patch("chat.chatbot.check_ollama_available", return_value=True),
+            patch("chat.chatbot.get_ollama_installed_models", return_value=installed),
+        ):
+            response = client.get("/api/chat/models")
+        assert response.status_code == 200
+        data = response.json()
+        model_values = [m["value"] for m in data]
+        assert "claude-sonnet-4-5" not in model_values
+        assert "ollama-llama3.2" in model_values
+
+    def test_list_models_ollama_unavailable(self, authenticated_client):
+        """Test that Ollama models are excluded when Ollama is not running"""
+        client, _ = authenticated_client
+        with (
+            override_settings(ANTHROPIC_API_KEY="", GITHUB_API_KEY=""),
+            patch("chat.chatbot.check_ollama_available", return_value=False),
+        ):
+            response = client.get("/api/chat/models")
+        assert response.status_code == 200
+        data = response.json()
+        model_values = [m["value"] for m in data]
+        assert "ollama-llama3.2" not in model_values
+
+    def test_create_conversation_disabled_model_rejected(self, authenticated_client):
+        """Test that creating conversation with disabled model returns 400"""
+        client, _ = authenticated_client
+        with override_settings(ANTHROPIC_API_KEY="", GITHUB_API_KEY=""):
+            response = client.post(
+                "/api/chat/conversations",
+                data={
+                    "title": "My Chat",
+                    "selected_models": ["claude-sonnet-4-5"],
+                },
+                content_type="application/json",
+            )
+        assert response.status_code == 400
+        data = response.json()
+        assert "error" in data
+        assert (
+            "not available" in data["error"].lower()
+            or "missing" in data["error"].lower()
+        )
 
     def test_list_conversations_unauthenticated(self, api_client):
         """Test listing conversations without authentication"""
@@ -96,14 +169,15 @@ class TestChatAPI:
     def test_create_conversation_success(self, authenticated_client):
         """Test successful conversation creation"""
         client, user = authenticated_client
-        response = client.post(
-            "/api/chat/conversations",
-            data={
-                "title": "My Chat",
-                "selected_models": ["claude-sonnet-4-5", "claude-haiku-4-5"],
-            },
-            content_type="application/json",
-        )
+        with override_settings(ANTHROPIC_API_KEY="test-key"):
+            response = client.post(
+                "/api/chat/conversations",
+                data={
+                    "title": "My Chat",
+                    "selected_models": ["claude-sonnet-4-5", "claude-haiku-4-5"],
+                },
+                content_type="application/json",
+            )
         assert response.status_code == 200
         data = response.json()
         assert data["title"] == "My Chat"
@@ -230,6 +304,54 @@ class TestChatAPI:
         response = client.delete(f"/api/chat/conversations/{conversation.id}")
         assert response.status_code == 404
 
+    def test_update_conversation_not_owner(self, authenticated_client):
+        """Test updating conversation that belongs to another user"""
+        client, user = authenticated_client
+        other_user = User.objects.create_user(
+            username="other", email="other@example.com", password="pass123"
+        )
+        conversation = Conversation.objects.create(
+            title="Other Chat",
+            selected_models=["claude-sonnet-4-5"],
+            user=other_user,
+        )
+
+        response = client.patch(
+            f"/api/chat/conversations/{conversation.id}",
+            data={"title": "Hijacked"},
+            content_type="application/json",
+        )
+        assert response.status_code == 404
+
+    def test_send_message_unavailable_models_returns_descriptive_error(
+        self, authenticated_client
+    ):
+        """Test that sending to a chat with uninstalled models returns a clear error"""
+        client, user = authenticated_client
+        conversation = Conversation.objects.create(
+            title="Old Ollama Chat",
+            selected_models=["ollama-llama3.2"],
+            user=user,
+        )
+        with (
+            override_settings(ANTHROPIC_API_KEY="", GITHUB_API_KEY=""),
+            patch("chat.chatbot.check_ollama_available", return_value=True),
+            patch(
+                "chat.chatbot.get_ollama_installed_models",
+                return_value=set(),
+            ),  # Ollama running but no models installed
+        ):
+            response = client.post(
+                f"/api/chat/conversations/{conversation.id}/messages",
+                data={"content": "Hello"},
+                content_type="application/json",
+            )
+        assert response.status_code == 400
+        data = response.json()
+        assert "error" in data
+        assert "not installed" in data["error"].lower()
+        assert "ollama pull" in data["error"].lower()
+
     @pytest.mark.asyncio
     async def test_send_message_unauthenticated(self):
         """Test sending message without authentication"""
@@ -242,6 +364,66 @@ class TestChatAPI:
             content_type="application/json",
         )
         assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    @pytest.mark.django_db
+    async def test_send_message_conversation_not_found(self):
+        """Test sending message to non-existent conversation"""
+        from django.test import AsyncClient
+        from asgiref.sync import sync_to_async
+        import uuid
+
+        test_id = str(uuid.uuid4())[:8]
+        user = await sync_to_async(User.objects.create_user)(
+            username=f"testuser_{test_id}",
+            email=f"test_{test_id}@example.com",
+            password="testpass123",
+        )
+        client = AsyncClient()
+        await sync_to_async(client.force_login)(user)
+
+        # Use a very high ID that won't exist
+        response = await client.post(
+            "/api/chat/conversations/999999/messages",
+            data={"content": "Hello"},
+            content_type="application/json",
+        )
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    @pytest.mark.django_db
+    async def test_send_message_conversation_not_owner(self):
+        """Test sending message to another user's conversation"""
+        from django.test import AsyncClient
+        from asgiref.sync import sync_to_async
+        import uuid
+
+        test_id = str(uuid.uuid4())[:8]
+        user = await sync_to_async(User.objects.create_user)(
+            username=f"testuser_{test_id}",
+            email=f"test_{test_id}@example.com",
+            password="testpass123",
+        )
+        other_user = await sync_to_async(User.objects.create_user)(
+            username=f"other_{test_id}",
+            email=f"other_{test_id}@example.com",
+            password="pass123",
+        )
+        conversation = await sync_to_async(Conversation.objects.create)(
+            title="Other's Chat",
+            selected_models=["claude-sonnet-4-5"],
+            user=other_user,
+        )
+
+        client = AsyncClient()
+        await sync_to_async(client.force_login)(user)
+
+        response = await client.post(
+            f"/api/chat/conversations/{conversation.id}/messages",
+            data={"content": "Hello"},
+            content_type="application/json",
+        )
+        assert response.status_code == 404
 
     @pytest.mark.asyncio
     @pytest.mark.django_db

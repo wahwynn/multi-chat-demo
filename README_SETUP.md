@@ -6,7 +6,10 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 
 - Python 3.13+ with `uv` installed
 - Node.js 18+ with npm
-- Anthropic API key (get one at https://console.anthropic.com/)
+- **AI model providers (all optional)** — the model list is detected dynamically based on configuration:
+  - **Anthropic API key** — for Claude models (get one at https://console.anthropic.com/)
+  - **GitHub API key** — for GitHub Models (create a fine-grained PAT with `models: read` scope at [GitHub Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens))
+  - **Ollama** — running locally or remotely for Ollama models (install from https://ollama.ai); only installed models appear
 
 ## Backend Setup (Django)
 
@@ -14,7 +17,10 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 
    ```bash
    cp .env.example .env
-   # Edit .env and add your ANTHROPIC_API_KEY
+   # Edit .env and optionally add API keys for the model providers you want:
+   # - ANTHROPIC_API_KEY for Claude models
+   # - GITHUB_API_KEY for GitHub Models
+   # - Ensure Ollama is running if you want Ollama models
    ```
 
 2. **Install dependencies:**
@@ -113,7 +119,7 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 
 - Django 5.2
 - Django Ninja (API framework)
-- Anthropic Claude API
+- AI integrations (all optional): Anthropic Claude API, Ollama API, GitHub Models API
 - SQLite database
 
 ### Frontend

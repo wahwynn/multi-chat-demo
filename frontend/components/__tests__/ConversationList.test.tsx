@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ConversationList from '../ConversationList';
-import { Conversation } from '@/lib/types';
+import { Conversation, MODEL_OPTIONS } from '@/lib/types';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -44,6 +44,7 @@ describe('ConversationList', () => {
     onNew: jest.fn(),
     onDelete: jest.fn(),
     onRename: jest.fn(),
+    modelOptions: MODEL_OPTIONS,
   };
 
   beforeEach(() => {
@@ -136,25 +137,13 @@ describe('ConversationList', () => {
   });
 
   it('should handle invalid localStorage data gracefully', () => {
-    // Mock console.error to suppress expected error output
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
     localStorage.setItem('defaultSelectedModels', 'invalid json');
 
     render(<ConversationList {...mockProps} />);
 
     const button = screen.getByTestId('select-models-button');
-    // Should fall back to default
+    // Should fall back to default when localStorage parse fails
     expect(button).toHaveTextContent('Claude 4.5 Sonnet');
-
-    // Verify that error was logged
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Failed to parse saved models:',
-      expect.any(Error)
-    );
-
-    // Restore console.error
-    consoleErrorSpy.mockRestore();
   });
 
   it('should handle empty array in localStorage', () => {
@@ -165,5 +154,111 @@ describe('ConversationList', () => {
     const button = screen.getByTestId('select-models-button');
     // Should fall back to default when array is empty
     expect(button).toHaveTextContent('Claude 4.5 Sonnet');
+  });
+
+  it('should show error when no models are available', () => {
+    render(<ConversationList {...mockProps} modelOptions={[]} />);
+
+    const button = screen.getByTestId('select-models-button');
+    expect(button).toHaveTextContent('No models available');
+
+    fireEvent.click(button);
+    expect(screen.getByTestId('no-models-error')).toBeInTheDocument();
+    expect(screen.getByTestId('no-models-error')).toHaveTextContent(/No models available/);
+  });
+
+  it('should call onSelect when conversation is clicked', () => {
+    render(<ConversationList {...mockProps} />);
+
+    fireEvent.click(screen.getByText('Test Conversation'));
+
+    expect(mockProps.onSelect).toHaveBeenCalledWith(1);
+  });
+
+  it('should open delete modal when delete button is clicked', () => {
+    render(<ConversationList {...mockProps} />);
+
+    fireEvent.click(screen.getByTestId('delete-conversation-button'));
+
+    expect(screen.getByTestId('delete-conversation-modal')).toBeInTheDocument();
+    expect(screen.getByText(/Delete Conversation/)).toBeInTheDocument();
+    expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+    expect(screen.getByTestId('confirm-delete-button')).toBeInTheDocument();
+    expect(screen.getByTestId('cancel-delete-button')).toBeInTheDocument();
+  });
+
+  it('should call onDelete when confirm delete is clicked', () => {
+    render(<ConversationList {...mockProps} />);
+
+    fireEvent.click(screen.getByTestId('delete-conversation-button'));
+    fireEvent.click(screen.getByTestId('confirm-delete-button'));
+
+    expect(mockProps.onDelete).toHaveBeenCalledWith(1);
+  });
+
+  it('should close delete modal when cancel is clicked', () => {
+    render(<ConversationList {...mockProps} />);
+
+    fireEvent.click(screen.getByTestId('delete-conversation-button'));
+    expect(screen.getByTestId('delete-conversation-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('cancel-delete-button'));
+    expect(mockProps.onDelete).not.toHaveBeenCalled();
+  });
+
+  it('should enter edit mode on double-click and call onRename on blur', () => {
+    render(<ConversationList {...mockProps} />);
+
+    fireEvent.doubleClick(screen.getByText('Test Conversation'));
+
+    const input = screen.getByTestId('conversation-title-input');
+    expect(input).toBeInTheDocument();
+    expect(input).toHaveValue('Test Conversation');
+
+    fireEvent.change(input, { target: { value: 'Updated Title' } });
+    fireEvent.blur(input);
+
+    expect(mockProps.onRename).toHaveBeenCalledWith(1, 'Updated Title');
+  });
+
+  it('should call onRename when Enter is pressed in edit mode', () => {
+    render(<ConversationList {...mockProps} />);
+
+    fireEvent.doubleClick(screen.getByText('Test Conversation'));
+    const input = screen.getByTestId('conversation-title-input');
+    fireEvent.change(input, { target: { value: 'New Title' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(mockProps.onRename).toHaveBeenCalledWith(1, 'New Title');
+  });
+
+  it('should cancel edit when Escape is pressed', () => {
+    render(<ConversationList {...mockProps} />);
+
+    fireEvent.doubleClick(screen.getByText('Test Conversation'));
+    const input = screen.getByTestId('conversation-title-input');
+    fireEvent.change(input, { target: { value: 'Changed' } });
+    fireEvent.keyDown(input, { key: 'Escape' });
+
+    expect(mockProps.onRename).not.toHaveBeenCalled();
+    expect(screen.getByText('Test Conversation')).toBeInTheDocument();
+  });
+
+  it('should not call onRename when edit title is empty', () => {
+    render(<ConversationList {...mockProps} />);
+
+    fireEvent.doubleClick(screen.getByText('Test Conversation'));
+    const input = screen.getByTestId('conversation-title-input');
+    fireEvent.change(input, { target: { value: '   ' } });
+    fireEvent.blur(input);
+
+    expect(mockProps.onRename).not.toHaveBeenCalled();
+  });
+
+  it('should disable New Chat when no models selected', () => {
+    render(<ConversationList {...mockProps} modelOptions={[]} />);
+
+    const newChatButton = screen.getByTestId('new-chat-button');
+    expect(newChatButton).toBeDisabled();
   });
 });

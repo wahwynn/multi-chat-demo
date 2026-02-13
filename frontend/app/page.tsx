@@ -7,7 +7,7 @@ import ChatWindow from '@/components/ChatWindow';
 import MessageInput from '@/components/MessageInput';
 import AuthPage from '@/components/AuthPage';
 import { chatApi, authApi } from '@/lib/api';
-import { Conversation, Message, User } from '@/lib/types';
+import { Conversation, Message, ModelOption, User } from '@/lib/types';
 import { useTheme } from '@/components/ThemeProvider';
 
 export default function Home() {
@@ -30,16 +30,18 @@ export default function Home() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [availableModels, setAvailableModels] = useState<ModelOption[]>([]);
 
   // Check authentication status on mount
   useEffect(() => {
     checkAuth();
   }, []);
 
-  // Load conversations when user is authenticated
+  // Load conversations and available models when user is authenticated
   useEffect(() => {
     if (user) {
       loadConversations();
+      chatApi.getAvailableModels().then(setAvailableModels).catch(console.error);
     }
   }, [user]);
 
@@ -261,9 +263,11 @@ export default function Home() {
     const currentConversation = conversations.find(c => c.id === selectedConversationId);
 
     if (!selectedConversationId || !currentConversation) {
-      // Create a new conversation if none is selected (use default model)
+      // Create a new conversation if none is selected (use first available model)
+      const defaultModels = availableModels.length > 0 ? [availableModels[0].value] : ['claude-sonnet-4-5'];
       try {
-        const newConv = await chatApi.createConversation('New Chat', ['claude-sonnet-4-5']);
+        setError(null);
+        const newConv = await chatApi.createConversation('New Chat', defaultModels);
         setConversations([newConv, ...conversations]);
         setSelectedConversationId(newConv.id);
 
@@ -279,7 +283,8 @@ export default function Home() {
         // Reload conversations to update the list
         loadConversations();
       } catch (err) {
-        setError('Failed to send message');
+        const apiError = err as { response?: { data?: { error?: string } } };
+        setError(apiError.response?.data?.error || 'Failed to send message');
         console.error(err);
         setIsLoading(false);
       }
@@ -288,6 +293,7 @@ export default function Home() {
 
     try {
       setIsLoading(true);
+      setError(null);
       await chatApi.sendMessage(selectedConversationId, content);
 
       // Reload conversation to get all messages including the new ones
@@ -298,7 +304,8 @@ export default function Home() {
       // Reload conversations to update timestamps
       loadConversations();
     } catch (err) {
-      setError('Failed to send message');
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Failed to send message');
       console.error(err);
       setIsLoading(false);
     }
@@ -327,6 +334,7 @@ export default function Home() {
         onNew={handleNewConversation}
         onDelete={handleDeleteConversation}
         onRename={handleRenameConversation}
+        modelOptions={availableModels}
       />
       <div className="flex-1 flex flex-col">
         <div className="navbar bg-base-300 shadow-md px-6">
@@ -610,13 +618,23 @@ export default function Home() {
           messages={currentMessages}
           expectedModelCount={
             selectedConversationId
-              ? conversations.find(c => c.id === selectedConversationId)?.selected_models.length || 1
+              ? (() => {
+                  const conv = conversations.find(c => c.id === selectedConversationId);
+                  if (!conv) return 1;
+                  const availableSet = new Set(availableModels.map(m => m.value));
+                  return conv.selected_models.filter(m => availableSet.has(m)).length || 1;
+                })()
               : 1
           }
           selectedModels={
             selectedConversationId
-              ? conversations.find(c => c.id === selectedConversationId)?.selected_models || ['claude-sonnet-4-5']
-              : ['claude-sonnet-4-5']
+              ? (() => {
+                  const conv = conversations.find(c => c.id === selectedConversationId);
+                  const models = conv?.selected_models || (availableModels[0] ? [availableModels[0].value] : []);
+                  const availableSet = new Set(availableModels.map(m => m.value));
+                  return models.filter(m => availableSet.has(m)).length ? models.filter(m => availableSet.has(m)) : (availableModels[0] ? [availableModels[0].value] : []);
+                })()
+              : (availableModels[0] ? [availableModels[0].value] : [])
           }
           user={user}
           isLoading={isLoading}

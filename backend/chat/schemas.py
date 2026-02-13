@@ -45,3 +45,8 @@ class SendMessageSchema(Schema):
 class ChatResponseSchema(Schema):
     message: MessageSchema  # User message
     assistant_messages: List[MessageSchema]  # Multiple responses (one per model)
+
+
+class ModelOptionSchema(Schema):
+    value: str
+    label: str

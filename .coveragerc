@@ -7,6 +7,9 @@ omit =
     */__pycache__/*
     */venv/*
     */.venv/*
+    */config/asgi.py
+    */config/wsgi.py
+    */manage.py
 
 [report]
 exclude_lines =
