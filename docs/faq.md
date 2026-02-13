@@ -174,17 +174,28 @@ No, Multi-Chat Demo requires an active internet connection to communicate with A
 
 ### What AI models are available?
 
-All model providers (Anthropic, Ollama, GitHub Models) are optional. Available models depend on your administrator's configuration:
+The app supports three optional model providers. The list of available models is **detected dynamically**—only models whose provider is configured will appear in the dropdown:
 
-- **Claude models** — require `ANTHROPIC_API_KEY` to be set
-- **Ollama models** — require a running Ollama instance
-- **GitHub Models** — require `GITHUB_API_KEY` to be set
+- **Claude models** — require `ANTHROPIC_API_KEY` (Claude 4.5 Sonnet, Haiku, Opus)
+- **Ollama models** — require a running Ollama instance; only locally installed models appear (e.g., Llama 3.2, Mistral, Phi-3)
+- **GitHub Models** — require `GITHUB_API_KEY` (a fine-grained PAT with `models: read` scope) for GPT-4.1, GPT-4o, GPT-4o Mini, and Llama 3.2 90B Vision
 
-Only models whose provider is configured will appear in the app. Check with your administrator for the complete list.
+The model list can change: add an API key, start Ollama, or install new Ollama models, then refresh the page to see updated options. If no providers are configured, you'll see "No models available."
 
 ### Can I add custom AI models?
 
-Model configuration requires backend changes. Contact your administrator or developer.
+The model list is defined in the backend (`backend/chat/chatbot.py` and `backend/chat/models.py`). Adding new models requires code changes—contact your administrator or developer.
+
+### Why did the model list change?
+
+The available models are detected dynamically. The list can change when:
+
+- An API key is added or removed (Claude, GitHub Models)
+- Ollama is started or stopped
+- New Ollama models are installed (`ollama pull <model>`)
+- The page is refreshed (the app fetches the current list on load)
+
+Refresh the page to see the latest available models.
 
 ### Is there a mobile app?
 

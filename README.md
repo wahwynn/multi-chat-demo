@@ -133,6 +133,7 @@ See [README_SETUP.md](README_SETUP.md) for detailed setup instructions.
 
 ### Chat (`/api/chat/`)
 
+- `GET /models` - List available models (detected dynamically from API keys and Ollama)
 - `GET /conversations` - List all conversations
 - `POST /conversations` - Create new conversation
 - `GET /conversations/{id}` - Get conversation with messages
@@ -300,7 +301,7 @@ All AI model providers are optional. Model availability depends on configured AP
 
 ## Supported AI Models
 
-**Note:** All model providers are optional. Claude models require `ANTHROPIC_API_KEY`; Ollama models require a running Ollama instance; GitHub Models require `GITHUB_API_KEY`. Only models whose provider is configured will appear in the app.
+**Optional model detection:** The list of available models is detected dynamically. All model providers are optional—only models whose provider is configured will appear in the app. The list can change when you add API keys, start or stop Ollama, or install new Ollama models (refresh the page to see updates).
 
 ### Claude Models (via Anthropic API)
 

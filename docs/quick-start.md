@@ -25,6 +25,8 @@ Get up and running with Multi-Chat Demo in minutes!
 
 ![New conversation](screenshots/04-new-conversation.png)
 
+**Note:** Available models depend on your setup—Claude (API key), Ollama (running locally), or GitHub Models (API key). Only configured providers appear. See the [Full User Guide](index.md#selecting-ai-models) for details.
+
 ### 3. Start Chatting
 
 1. Type your message in the text box at the bottom

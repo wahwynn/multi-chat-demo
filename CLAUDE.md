@@ -129,11 +129,14 @@ npm run dev
 
 All endpoints are available at `http://localhost:8000/api/chat/`:
 
+- `GET /models` - List available models (detected dynamically from API keys and Ollama; returns `[{value, label}]`)
 - `GET /conversations` - List all conversations
 - `POST /conversations` - Create a new conversation (body: `{title: string}`)
 - `GET /conversations/{id}` - Get conversation with all messages
 - `DELETE /conversations/{id}` - Delete a conversation
 - `POST /conversations/{id}/messages` - Send message and get AI response (body: `{content: string}`)
+
+Model availability is optional: Claude (ANTHROPIC_API_KEY), Ollama (running instance + installed models), GitHub Models (GITHUB_API_KEY). The model list can change when configuration changes.
 
 Django Ninja provides automatic API documentation at `http://localhost:8000/api/docs`
 
