@@ -291,7 +291,11 @@ export default function ConversationList({
       </div>
 
       {/* Delete Confirmation Modal */}
-      <dialog className={`modal ${deleteModalOpen ? 'modal-open' : ''}`}>
+      <dialog
+        className={`modal ${deleteModalOpen ? 'modal-open' : ''}`}
+        data-testid="delete-conversation-modal"
+        aria-label="Delete conversation"
+      >
         <div className="modal-box">
           <h3 className="font-bold text-xl mb-4">Delete Conversation</h3>
           <p className="py-4 text-base leading-relaxed">

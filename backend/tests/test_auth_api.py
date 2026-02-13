@@ -418,38 +418,31 @@ class TestAuthAPI:
         data = response.json()
         assert data["avatar_url"] is not None
 
-    def test_upload_avatar_rgba_to_jpeg(self, authenticated_client):
-        """Test uploading RGBA image as JPEG (should convert to RGB) - line 80"""
-        client, user = authenticated_client
-        # Create RGBA image and save as PNG
-        img = Image.new("RGBA", (100, 100), color=(255, 0, 0, 128))
-        png_io = io.BytesIO()
-        img.save(png_io, format="PNG")
-        png_io.seek(0)
+    def test_validate_image_rgba_to_rgb_conversion(self):
+        """Test validate_and_process_image converts RGBA to RGB when format is JPEG (line 86)"""
+        from unittest.mock import patch
+        from chat.auth_api import validate_and_process_image
 
-        # Upload PNG file - the validation should detect it's RGBA and convert to RGB when saving as JPEG
-        # But actually, we need to upload a file that will be detected as JPEG format but has RGBA mode
-        # The validation function checks img_format == "JPEG" and img.mode in ("RGBA", "P")
-        # So we need to create a file that Image.open() will identify as JPEG format but has RGBA data
-        # Actually, PIL won't open a JPEG as RGBA, so we need to upload a PNG that we'll process
-        # Let's create a PNG file and upload it - the code path for RGBA->RGB conversion happens
-        # when the format is JPEG and mode is RGBA, but that's hard to achieve with real files
-        # Instead, let's test by creating a file that will be processed and trigger the conversion
+        # Create RGBA PNG - PIL opens it as format PNG, mode RGBA
+        # We need format=JPEG + mode=RGBA to trigger img.convert("RGB")
+        img_io = io.BytesIO()
+        Image.new("RGBA", (50, 50), color=(255, 0, 0, 128)).save(img_io, format="PNG")
+        img_io.seek(0)
+        file = SimpleUploadedFile("test.jpg", img_io.read(), "image/jpeg")
+        file.seek(0)
 
-        # Actually, the easiest way is to upload a PNG file that has RGBA mode
-        # The validation will process it and when it detects JPEG format with RGBA mode, it converts
-        response = client.post(
-            "/api/auth/avatar",
-            {"file": SimpleUploadedFile("test.png", png_io.read(), "image/png")},
-        )
-        # This should work - PNG with RGBA will be processed
-        assert response.status_code == 200
+        original_open = Image.open
 
-        # For the specific line 80 test, we need JPEG format with RGBA mode
-        # This is tricky because JPEG files can't have RGBA mode
-        # Let's test by mocking or by creating a scenario where the image is opened as RGBA
-        # but the format is detected as JPEG (which shouldn't happen in practice)
-        # Actually, let's just verify the code works - if we upload a valid image, it should work
+        def mock_open(fp):
+            fp.seek(0)
+            img_result = original_open(io.BytesIO(img_io.getvalue()))
+            img_result.format = "JPEG"
+            return img_result
+
+        with patch("chat.auth_api.Image.open", side_effect=mock_open):
+            processed, error = validate_and_process_image(file)
+        assert processed is not None
+        assert error is None
 
     def test_upload_avatar_palette_to_jpeg(self, authenticated_client):
         """Test uploading palette mode image as JPEG (should convert to RGB)"""
@@ -550,7 +543,7 @@ class TestAuthAPI:
         assert second_avatar_url != first_avatar_url
 
     def test_get_avatar_url_no_profile(self, api_client, setup):
-        """Test get_avatar_url when user has no profile"""
+        """Test get_avatar_url when user has no profile (UserProfile.DoesNotExist)"""
         from chat.auth_api import get_avatar_url
 
         user = User.objects.create_user(
@@ -558,16 +551,22 @@ class TestAuthAPI:
             email=f"test_{self.test_id}@example.com",
             password="testpass123",
         )
-        # Delete profile to test exception handling
-        try:
-            profile = user.profile  # type: ignore[attr-defined]
-            profile.delete()
-        except UserProfile.DoesNotExist:
-            pass
-
+        UserProfile.objects.filter(user=user).delete()
         request = api_client.request()
-        # This should handle the DoesNotExist exception gracefully (lines 134-135)
         url = get_avatar_url(request, user)
+        assert url is None
+
+    def test_get_avatar_url_profile_does_not_exist(self, api_client):
+        """Test get_avatar_url when user.profile raises DoesNotExist (lines 140-141)"""
+        from unittest.mock import patch, PropertyMock
+        from chat.auth_api import get_avatar_url
+
+        with patch.object(User, "profile", new_callable=PropertyMock) as mock_profile:
+            mock_profile.side_effect = UserProfile.DoesNotExist
+            user = User()
+            user.pk = 1
+            request = api_client.request()
+            url = get_avatar_url(request, user)
         assert url is None
 
     def test_get_avatar_url_with_avatar(self, authenticated_client, setup):

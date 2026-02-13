@@ -1,8 +1,8 @@
 import pytest
 from django.contrib import admin
 from django.contrib.auth.models import User
-from chat.models import Conversation, Message
-from chat.admin import MessageAdmin
+from chat.models import Conversation, Message, UserProfile
+from chat.admin import MessageAdmin, UserProfileAdmin
 
 
 @pytest.mark.django_db
@@ -41,3 +41,24 @@ class TestAdmin:
         assert len(preview) == 53  # 50 chars + "..."
         assert preview.endswith("...")
         assert preview.startswith(long_content[:50])
+
+    def test_user_profile_admin_has_avatar_true(self):
+        """Test has_avatar returns True when user has avatar"""
+        from django.core.files.base import ContentFile
+
+        user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        profile = UserProfile.objects.get(user=user)
+        profile.avatar.save("test.png", ContentFile(b"fake"), save=True)
+        admin_instance = UserProfileAdmin(UserProfile, admin.site)
+        assert admin_instance.has_avatar(profile) is True
+
+    def test_user_profile_admin_has_avatar_false(self):
+        """Test has_avatar returns False when user has no avatar"""
+        user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        profile = UserProfile.objects.get(user=user)
+        admin_instance = UserProfileAdmin(UserProfile, admin.site)
+        assert admin_instance.has_avatar(profile) is False

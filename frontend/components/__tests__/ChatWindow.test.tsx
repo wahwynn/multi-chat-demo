@@ -191,4 +191,50 @@ describe('ChatWindow', () => {
     const loadingTexts = screen.getAllByText(/waiting for response/i)
     expect(loadingTexts.length).toBeGreaterThan(0)
   })
+
+  it('shows loading state when sending first message', () => {
+    render(
+      <ChatWindow
+        messages={[]}
+        expectedModelCount={2}
+        isLoading={true}
+        selectedModels={['claude-sonnet-4-5', 'claude-haiku-4-5']}
+        user={mockUser}
+      />
+    )
+
+    expect(screen.getByText(/Sending your message/i)).toBeInTheDocument()
+  })
+
+  it('shows loading cards when sending message with existing messages', () => {
+    const messages: Message[] = [
+      {
+        id: 1,
+        role: 'user',
+        content: 'Previous message',
+        created_at: '2024-01-01T12:00:00Z',
+      },
+      {
+        id: 2,
+        role: 'assistant',
+        content: 'Previous response',
+        model: 'claude-sonnet-4-5',
+        parent_message_id: 1,
+        created_at: '2024-01-01T12:00:01Z',
+      },
+    ]
+
+    render(
+      <ChatWindow
+        messages={messages}
+        expectedModelCount={2}
+        isLoading={true}
+        selectedModels={['claude-sonnet-4-5', 'claude-haiku-4-5']}
+        user={mockUser}
+      />
+    )
+
+    expect(screen.getByText('Sending...')).toBeInTheDocument()
+    expect(screen.getAllByText(/Generating response/i).length).toBeGreaterThan(0)
+  })
 })

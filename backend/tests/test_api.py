@@ -304,6 +304,25 @@ class TestChatAPI:
         response = client.delete(f"/api/chat/conversations/{conversation.id}")
         assert response.status_code == 404
 
+    def test_update_conversation_not_owner(self, authenticated_client):
+        """Test updating conversation that belongs to another user"""
+        client, user = authenticated_client
+        other_user = User.objects.create_user(
+            username="other", email="other@example.com", password="pass123"
+        )
+        conversation = Conversation.objects.create(
+            title="Other Chat",
+            selected_models=["claude-sonnet-4-5"],
+            user=other_user,
+        )
+
+        response = client.patch(
+            f"/api/chat/conversations/{conversation.id}",
+            data={"title": "Hijacked"},
+            content_type="application/json",
+        )
+        assert response.status_code == 404
+
     def test_send_message_unavailable_models_returns_descriptive_error(
         self, authenticated_client
     ):
@@ -345,6 +364,66 @@ class TestChatAPI:
             content_type="application/json",
         )
         assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    @pytest.mark.django_db
+    async def test_send_message_conversation_not_found(self):
+        """Test sending message to non-existent conversation"""
+        from django.test import AsyncClient
+        from asgiref.sync import sync_to_async
+        import uuid
+
+        test_id = str(uuid.uuid4())[:8]
+        user = await sync_to_async(User.objects.create_user)(
+            username=f"testuser_{test_id}",
+            email=f"test_{test_id}@example.com",
+            password="testpass123",
+        )
+        client = AsyncClient()
+        await sync_to_async(client.force_login)(user)
+
+        # Use a very high ID that won't exist
+        response = await client.post(
+            "/api/chat/conversations/999999/messages",
+            data={"content": "Hello"},
+            content_type="application/json",
+        )
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    @pytest.mark.django_db
+    async def test_send_message_conversation_not_owner(self):
+        """Test sending message to another user's conversation"""
+        from django.test import AsyncClient
+        from asgiref.sync import sync_to_async
+        import uuid
+
+        test_id = str(uuid.uuid4())[:8]
+        user = await sync_to_async(User.objects.create_user)(
+            username=f"testuser_{test_id}",
+            email=f"test_{test_id}@example.com",
+            password="testpass123",
+        )
+        other_user = await sync_to_async(User.objects.create_user)(
+            username=f"other_{test_id}",
+            email=f"other_{test_id}@example.com",
+            password="pass123",
+        )
+        conversation = await sync_to_async(Conversation.objects.create)(
+            title="Other's Chat",
+            selected_models=["claude-sonnet-4-5"],
+            user=other_user,
+        )
+
+        client = AsyncClient()
+        await sync_to_async(client.force_login)(user)
+
+        response = await client.post(
+            f"/api/chat/conversations/{conversation.id}/messages",
+            data={"content": "Hello"},
+            content_type="application/json",
+        )
+        assert response.status_code == 404
 
     @pytest.mark.asyncio
     @pytest.mark.django_db
