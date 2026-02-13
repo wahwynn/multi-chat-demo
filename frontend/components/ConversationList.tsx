@@ -170,10 +170,12 @@ export default function ConversationList({
               className="btn btn-outline w-full justify-between"
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
-              <span className="truncate">
-                {selectedModels.length === 0
-                  ? 'Select models...'
-                  : selectedModels.map(m => modelOptions.find(opt => opt.value === m)?.label || m).join(', ')}
+              <span className={`truncate ${modelOptions.length === 0 ? 'text-error' : ''}`}>
+                {modelOptions.length === 0
+                  ? 'No models available'
+                  : selectedModels.length === 0
+                    ? 'Select models...'
+                    : selectedModels.map(m => modelOptions.find(opt => opt.value === m)?.label || m).join(', ')}
               </span>
               <svg
                 className={`h-4 w-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
@@ -186,20 +188,26 @@ export default function ConversationList({
             </button>
             {dropdownOpen && (
               <ul className="absolute left-0 right-0 top-full mt-1 bg-base-100 rounded-box z-50 p-2 shadow-lg border border-base-300">
-                {modelOptions.map((option) => (
-                  <li key={option.value} className="list-none">
-                    <label className="flex items-center cursor-pointer gap-3 py-2 px-2 hover:bg-base-200 rounded-lg">
-                      <input
-                        type="checkbox"
-                        checked={selectedModels.includes(option.value)}
-                        onChange={() => handleModelToggle(option.value)}
-                        data-testid={`model-checkbox-${option.value}`}
-                        className="checkbox checkbox-sm border-2 border-base-content/60 bg-base-100"
-                      />
-                      <span className="label-text">{option.label}</span>
-                    </label>
+                {modelOptions.length === 0 ? (
+                  <li className="list-none py-3 px-2 text-error text-sm" data-testid="no-models-error">
+                    No models available. Configure at least one provider: set ANTHROPIC_API_KEY, GITHUB_API_KEY, or run Ollama.
                   </li>
-                ))}
+                ) : (
+                  modelOptions.map((option) => (
+                    <li key={option.value} className="list-none">
+                      <label className="flex items-center cursor-pointer gap-3 py-2 px-2 hover:bg-base-200 rounded-lg">
+                        <input
+                          type="checkbox"
+                          checked={selectedModels.includes(option.value)}
+                          onChange={() => handleModelToggle(option.value)}
+                          data-testid={`model-checkbox-${option.value}`}
+                          className="checkbox checkbox-sm border-2 border-base-content/60 bg-base-100"
+                        />
+                        <span className="label-text">{option.label}</span>
+                      </label>
+                    </li>
+                  ))
+                )}
               </ul>
             )}
           </div>

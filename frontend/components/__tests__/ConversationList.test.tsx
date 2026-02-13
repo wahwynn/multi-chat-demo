@@ -155,4 +155,15 @@ describe('ConversationList', () => {
     // Should fall back to default when array is empty
     expect(button).toHaveTextContent('Claude 4.5 Sonnet');
   });
+
+  it('should show error when no models are available', () => {
+    render(<ConversationList {...mockProps} modelOptions={[]} />);
+
+    const button = screen.getByTestId('select-models-button');
+    expect(button).toHaveTextContent('No models available');
+
+    fireEvent.click(button);
+    expect(screen.getByTestId('no-models-error')).toBeInTheDocument();
+    expect(screen.getByTestId('no-models-error')).toHaveTextContent(/No models available/);
+  });
 });
