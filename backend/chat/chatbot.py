@@ -41,6 +41,26 @@ def check_ollama_available(ollama_base_url: str = "http://localhost:11434") -> b
         return False
 
 
+def get_ollama_installed_models(
+    ollama_base_url: str = "http://localhost:11434",
+) -> set[str]:
+    """
+    Fetch list of installed Ollama models via /api/tags.
+    Returns set of model base names (e.g. "llama3.2", "mistral").
+    Ollama may return names with tags like "llama3.2:latest"; we match by prefix.
+    """
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            response = client.get(f"{ollama_base_url.rstrip('/')}/api/tags")
+            if response.status_code != 200:
+                return set()
+            data = response.json()
+            models = data.get("models", [])
+            return {m.get("name", "").split(":")[0] for m in models if m.get("name")}
+    except Exception:
+        return set()
+
+
 def get_available_models(
     anthropic_api_key: str = "",
     github_api_key: str = "",
@@ -55,12 +75,58 @@ def get_available_models(
         for m in CLAUDE_MODELS:
             models.append({"value": m, "label": MODEL_LABELS[m]})
     if check_ollama_available(ollama_base_url):
+        installed = get_ollama_installed_models(ollama_base_url)
         for m in OLLAMA_MODELS:
-            models.append({"value": m, "label": MODEL_LABELS[m]})
+            # Only include Ollama models that are actually installed
+            ollama_name = m.replace("ollama-", "")
+            if ollama_name in installed:
+                models.append({"value": m, "label": MODEL_LABELS[m]})
     if github_api_key and github_api_key.strip():
         for m in GITHUB_MODELS:
             models.append({"value": m, "label": MODEL_LABELS[m]})
     return models
+
+
+def get_unavailable_model_reasons(
+    selected_models: list[str],
+    anthropic_api_key: str = "",
+    github_api_key: str = "",
+    ollama_base_url: str = "http://localhost:11434",
+) -> list[tuple[str, str]]:
+    """
+    Return list of (model_id, reason) for models that are selected but not available.
+    Used to build descriptive error messages when chatting with old conversations.
+    """
+    reasons: list[tuple[str, str]] = []
+    ollama_available = check_ollama_available(ollama_base_url)
+    ollama_installed = (
+        get_ollama_installed_models(ollama_base_url) if ollama_available else set()
+    )
+
+    for model in selected_models:
+        if is_ollama_model(model):
+            if not ollama_available:
+                reasons.append((model, "Ollama is not running"))
+            else:
+                ollama_name = model.replace("ollama-", "")
+                if ollama_name not in ollama_installed:
+                    label = MODEL_LABELS.get(model, model)
+                    reasons.append(
+                        (
+                            model,
+                            f"Model '{label}' is not installed in Ollama (run 'ollama pull {ollama_name}')",
+                        )
+                    )
+        elif model in CLAUDE_MODELS:
+            if not (anthropic_api_key and anthropic_api_key.strip()):
+                reasons.append((model, "ANTHROPIC_API_KEY not configured"))
+        elif model in GITHUB_MODELS:
+            if not (github_api_key and github_api_key.strip()):
+                reasons.append((model, "GITHUB_API_KEY not configured"))
+        else:
+            reasons.append((model, "Model not available"))
+
+    return reasons
 
 
 def is_ollama_model(model: str) -> bool:

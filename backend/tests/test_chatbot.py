@@ -63,14 +63,33 @@ class TestChatbotHelpers:
             assert check_ollama_available("http://localhost:11434") is False
 
     def test_get_available_models_includes_ollama_when_available(self):
-        """Test that Ollama models are included when Ollama is running"""
-        with patch("chat.chatbot.check_ollama_available", return_value=True):
+        """Test that Ollama models are included when Ollama is running and installed"""
+        installed = {"llama3.2", "llama3.1", "mistral", "phi3"}
+        with (
+            patch("chat.chatbot.check_ollama_available", return_value=True),
+            patch("chat.chatbot.get_ollama_installed_models", return_value=installed),
+        ):
             models = get_available_models(
                 anthropic_api_key="",
                 github_api_key="",
             )
         values = [m["value"] for m in models]
         assert "ollama-llama3.2" in values
+
+    def test_get_available_models_excludes_uninstalled_ollama_models(self):
+        """Test that Ollama models not installed are excluded from available list"""
+        installed = {"mistral"}  # llama3.2 not installed
+        with (
+            patch("chat.chatbot.check_ollama_available", return_value=True),
+            patch("chat.chatbot.get_ollama_installed_models", return_value=installed),
+        ):
+            models = get_available_models(
+                anthropic_api_key="",
+                github_api_key="",
+            )
+        values = [m["value"] for m in models]
+        assert "ollama-mistral" in values
+        assert "ollama-llama3.2" not in values
 
     def test_get_available_models_excludes_ollama_when_unavailable(self):
         """Test that Ollama models are excluded when Ollama is not running"""

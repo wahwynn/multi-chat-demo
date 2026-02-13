@@ -45,9 +45,11 @@ class TestChatAPI:
     def test_list_models_authenticated(self, authenticated_client):
         """Test listing available models based on API keys"""
         client, _ = authenticated_client
+        installed = {"llama3.2", "llama3.1", "mistral", "phi3"}
         with (
             override_settings(ANTHROPIC_API_KEY="test-key", GITHUB_API_KEY=""),
             patch("chat.chatbot.check_ollama_available", return_value=True),
+            patch("chat.chatbot.get_ollama_installed_models", return_value=installed),
         ):
             response = client.get("/api/chat/models")
         assert response.status_code == 200
@@ -60,9 +62,11 @@ class TestChatAPI:
     def test_list_models_without_anthropic_key(self, authenticated_client):
         """Test that Claude models are excluded when ANTHROPIC_API_KEY is missing"""
         client, _ = authenticated_client
+        installed = {"llama3.2", "llama3.1", "mistral", "phi3"}
         with (
             override_settings(ANTHROPIC_API_KEY="", GITHUB_API_KEY=""),
             patch("chat.chatbot.check_ollama_available", return_value=True),
+            patch("chat.chatbot.get_ollama_installed_models", return_value=installed),
         ):
             response = client.get("/api/chat/models")
         assert response.status_code == 200
@@ -299,6 +303,35 @@ class TestChatAPI:
 
         response = client.delete(f"/api/chat/conversations/{conversation.id}")
         assert response.status_code == 404
+
+    def test_send_message_unavailable_models_returns_descriptive_error(
+        self, authenticated_client
+    ):
+        """Test that sending to a chat with uninstalled models returns a clear error"""
+        client, user = authenticated_client
+        conversation = Conversation.objects.create(
+            title="Old Ollama Chat",
+            selected_models=["ollama-llama3.2"],
+            user=user,
+        )
+        with (
+            override_settings(ANTHROPIC_API_KEY="", GITHUB_API_KEY=""),
+            patch("chat.chatbot.check_ollama_available", return_value=True),
+            patch(
+                "chat.chatbot.get_ollama_installed_models",
+                return_value=set(),
+            ),  # Ollama running but no models installed
+        ):
+            response = client.post(
+                f"/api/chat/conversations/{conversation.id}/messages",
+                data={"content": "Hello"},
+                content_type="application/json",
+            )
+        assert response.status_code == 400
+        data = response.json()
+        assert "error" in data
+        assert "not installed" in data["error"].lower()
+        assert "ollama pull" in data["error"].lower()
 
     @pytest.mark.asyncio
     async def test_send_message_unauthenticated(self):

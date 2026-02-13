@@ -266,6 +266,7 @@ export default function Home() {
       // Create a new conversation if none is selected (use first available model)
       const defaultModels = availableModels.length > 0 ? [availableModels[0].value] : ['claude-sonnet-4-5'];
       try {
+        setError(null);
         const newConv = await chatApi.createConversation('New Chat', defaultModels);
         setConversations([newConv, ...conversations]);
         setSelectedConversationId(newConv.id);
@@ -282,7 +283,8 @@ export default function Home() {
         // Reload conversations to update the list
         loadConversations();
       } catch (err) {
-        setError('Failed to send message');
+        const apiError = err as { response?: { data?: { error?: string } } };
+        setError(apiError.response?.data?.error || 'Failed to send message');
         console.error(err);
         setIsLoading(false);
       }
@@ -291,6 +293,7 @@ export default function Home() {
 
     try {
       setIsLoading(true);
+      setError(null);
       await chatApi.sendMessage(selectedConversationId, content);
 
       // Reload conversation to get all messages including the new ones
@@ -301,7 +304,8 @@ export default function Home() {
       // Reload conversations to update timestamps
       loadConversations();
     } catch (err) {
-      setError('Failed to send message');
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Failed to send message');
       console.error(err);
       setIsLoading(false);
     }

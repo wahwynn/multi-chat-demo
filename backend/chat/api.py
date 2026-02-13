@@ -13,7 +13,12 @@ from .schemas import (
     SendMessageSchema,
     ChatResponseSchema,
 )
-from .chatbot import get_multi_model_responses, get_available_models
+from .chatbot import (
+    get_multi_model_responses,
+    get_available_models,
+    get_unavailable_model_reasons,
+    MODEL_LABELS,
+)
 from .schemas import ModelOptionSchema
 
 router = Router()
@@ -70,7 +75,7 @@ def create_conversation(request: HttpRequest, payload: CreateConversationSchema)
     if not payload.selected_models:
         return 400, {"error": "Must select at least 1 model"}
 
-    # Validate all selected models are enabled (have API keys configured)
+    # Validate all selected models are enabled (API keys configured, Ollama models installed)
     available_values = {
         m["value"]
         for m in get_available_models(
@@ -83,9 +88,18 @@ def create_conversation(request: HttpRequest, payload: CreateConversationSchema)
     }
     invalid = [m for m in payload.selected_models if m not in available_values]
     if invalid:
-        return 400, {
-            "error": f"Models not available (missing API key): {', '.join(invalid)}"
-        }
+        unavailable = get_unavailable_model_reasons(
+            invalid,
+            anthropic_api_key=getattr(settings, "ANTHROPIC_API_KEY", "") or "",
+            github_api_key=getattr(settings, "GITHUB_API_KEY", "") or "",
+            ollama_base_url=getattr(
+                settings, "OLLAMA_BASE_URL", "http://localhost:11434"
+            ),
+        )
+        details = "; ".join(
+            f"{MODEL_LABELS.get(m, m)}: {reason}" for m, reason in unavailable
+        )
+        return 400, {"error": f"Models not available. {details}"}
 
     conversation = Conversation.objects.create(
         title=payload.title,
@@ -225,9 +239,18 @@ async def send_message(
     models_to_query = [m for m in conversation.selected_models if m in available_values]
 
     if not models_to_query:
-        return 400, {
-            "error": "None of the selected models are available. Add ANTHROPIC_API_KEY or GITHUB_API_KEY to enable them."
-        }
+        unavailable = get_unavailable_model_reasons(
+            conversation.selected_models,
+            anthropic_api_key=getattr(settings, "ANTHROPIC_API_KEY", "") or "",
+            github_api_key=getattr(settings, "GITHUB_API_KEY", "") or "",
+            ollama_base_url=getattr(
+                settings, "OLLAMA_BASE_URL", "http://localhost:11434"
+            ),
+        )
+        details = "; ".join(
+            f"{MODEL_LABELS.get(m, m)}: {reason}" for m, reason in unavailable
+        )
+        return 400, {"error": f"None of the selected models are available. {details}"}
 
     # Get responses from all selected models in parallel
     model_responses = await get_multi_model_responses(
