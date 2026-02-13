@@ -2,6 +2,8 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from chat.chatbot import (
     is_ollama_model,
+    is_github_model,
+    get_github_model_id,
     get_single_model_response_async,
     get_multi_model_responses,
 )
@@ -21,6 +23,24 @@ class TestChatbotHelpers:
         assert is_ollama_model("claude-sonnet-4-5") is False
         assert is_ollama_model("claude-haiku-4-5") is False
         assert is_ollama_model("claude-opus-4-5") is False
+
+    def test_is_github_model_true(self):
+        """Test that GitHub models are correctly identified"""
+        assert is_github_model("github-openai/gpt-4.1") is True
+        assert is_github_model("github-meta/llama-3.2-90b-vision-instruct") is True
+
+    def test_is_github_model_false(self):
+        """Test that non-GitHub models are not identified as GitHub"""
+        assert is_github_model("claude-sonnet-4-5") is False
+        assert is_github_model("ollama-llama3.2") is False
+
+    def test_get_github_model_id(self):
+        """Test that GitHub model ID prefix is stripped correctly"""
+        assert get_github_model_id("github-openai/gpt-4.1") == "openai/gpt-4.1"
+        assert (
+            get_github_model_id("github-meta/llama-3.2-90b-vision-instruct")
+            == "meta/llama-3.2-90b-vision-instruct"
+        )
 
 
 @pytest.mark.asyncio
@@ -103,6 +123,45 @@ class TestChatbotAPI:
 
             assert result[0] == "claude-sonnet-4-5"
             assert "Claude" in result[1]
+
+    async def test_get_single_model_response_github_no_api_key(self, sample_messages):
+        """Test GitHub model returns error when no API key is configured"""
+        result = await get_single_model_response_async(
+            sample_messages,
+            "github-openai/gpt-4.1",
+            "dummy-key",
+            github_api_key="",
+        )
+        assert result[0] == "github-openai/gpt-4.1"
+        assert "GITHUB_API_KEY" in result[1]
+        assert "models: read" in result[1]
+
+    async def test_get_single_model_response_github_success(self, sample_messages):
+        """Test successful GitHub model response"""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "choices": [
+                {"message": {"content": "Hello! I'm GPT-4.1.", "role": "assistant"}}
+            ]
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_client_instance = AsyncMock()
+            mock_client_instance.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+            mock_client.return_value = mock_client_instance
+
+            result = await get_single_model_response_async(
+                sample_messages,
+                "github-openai/gpt-4.1",
+                "dummy-key",
+                github_api_key="ghp_test",
+            )
+
+            assert result[0] == "github-openai/gpt-4.1"
+            assert "GPT-4.1" in result[1]
 
     async def test_get_single_model_response_claude_empty_response(
         self, sample_messages

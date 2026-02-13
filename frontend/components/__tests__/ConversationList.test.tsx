@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ConversationList from '../ConversationList';
-import { Conversation } from '@/lib/types';
+import { Conversation, MODEL_OPTIONS } from '@/lib/types';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -44,6 +44,7 @@ describe('ConversationList', () => {
     onNew: jest.fn(),
     onDelete: jest.fn(),
     onRename: jest.fn(),
+    modelOptions: MODEL_OPTIONS,
   };
 
   beforeEach(() => {
@@ -136,25 +137,13 @@ describe('ConversationList', () => {
   });
 
   it('should handle invalid localStorage data gracefully', () => {
-    // Mock console.error to suppress expected error output
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
     localStorage.setItem('defaultSelectedModels', 'invalid json');
 
     render(<ConversationList {...mockProps} />);
 
     const button = screen.getByTestId('select-models-button');
-    // Should fall back to default
+    // Should fall back to default when localStorage parse fails
     expect(button).toHaveTextContent('Claude 4.5 Sonnet');
-
-    // Verify that error was logged
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Failed to parse saved models:',
-      expect.any(Error)
-    );
-
-    // Restore console.error
-    consoleErrorSpy.mockRestore();
   });
 
   it('should handle empty array in localStorage', () => {

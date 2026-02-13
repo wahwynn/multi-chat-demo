@@ -6,7 +6,8 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 
 - Python 3.13+ with `uv` installed
 - Node.js 18+ with npm
-- Anthropic API key (get one at https://console.anthropic.com/)
+- Anthropic API key (optional, for Claude models; get one at https://console.anthropic.com/)
+- GitHub API key (optional, for GitHub Models: create a fine-grained PAT with `models: read` scope)
 
 ## Backend Setup (Django)
 
@@ -14,7 +15,8 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend.
 
    ```bash
    cp .env.example .env
-   # Edit .env and add your ANTHROPIC_API_KEY
+   # Edit .env and optionally add ANTHROPIC_API_KEY for Claude models
+   # Optionally add GITHUB_API_KEY for GitHub Models
    ```
 
 2. **Install dependencies:**

@@ -9,6 +9,7 @@ A full-stack chatbot application with Django Ninja backend and Next.js frontend 
 - **Multi-model chat interface**: Chat with multiple AI models simultaneously
   - Claude 4.5 Sonnet, Haiku, and Opus
   - Ollama models (Llama 3.2, Llama 3.1, Mistral, Phi-3)
+  - GitHub Models (GPT-4.1, GPT-4o, Llama 3.2 90B Vision)
   - Parallel response generation from all selected models
 - **User authentication**: Secure sign up, sign in, and logout
 - **User profiles**:
@@ -68,7 +69,7 @@ See [README_SETUP.md](README_SETUP.md) for detailed setup instructions.
 
 - Python 3.13+ with `uv` installed
 - Node.js 18+ with npm
-- Anthropic API key (for Claude models)
+- Anthropic API key (optional, for Claude models)
 - Ollama (optional, for local Ollama models)
 
 ### Quick Setup
@@ -80,7 +81,7 @@ See [README_SETUP.md](README_SETUP.md) for detailed setup instructions.
    uv sync
 
    # Set up environment variables
-   # Create .env file with ANTHROPIC_API_KEY
+   # Create .env file (optionally add ANTHROPIC_API_KEY for Claude models)
 
    # Run migrations
    uv run python backend/manage.py migrate
@@ -283,7 +284,8 @@ npm test
 
 ### Backend (.env)
 
-- `ANTHROPIC_API_KEY` - Your Anthropic API key (required for Claude models)
+- `ANTHROPIC_API_KEY` - Your Anthropic API key (optional, for Claude models)
+- `GITHUB_API_KEY` - GitHub fine-grained personal access token with `models: read` scope (required for GitHub Models)
 - `OLLAMA_BASE_URL` - Ollama API base URL (default: http://localhost:11434)
 - `CHAT_CONTEXT_WINDOW_SIZE` - Number of recent messages to include in context (default: 10)
 
@@ -307,6 +309,15 @@ npm test
 - `ollama-phi3` - Phi-3
 
 **Note**: Ollama models require a running Ollama instance. Install from [ollama.ai](https://ollama.ai) and ensure the models are pulled locally.
+
+### GitHub Models (via GitHub Models API)
+
+- `github-openai/gpt-4.1` - OpenAI GPT-4.1
+- `github-openai/gpt-4o-mini` - OpenAI GPT-4o Mini
+- `github-openai/gpt-4o` - OpenAI GPT-4o
+- `github-meta/llama-3.2-90b-vision-instruct` - Meta Llama 3.2 90B Vision
+
+**Note**: GitHub Models require a fine-grained personal access token with `models: read` scope. Create one at [GitHub Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens). See [GitHub Models API docs](https://docs.github.com/en/rest/models/inference).
 
 ## License
 

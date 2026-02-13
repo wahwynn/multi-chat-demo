@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Conversation, ChatResponse, User, AuthStatus } from './types';
+import { Conversation, ChatResponse, User, AuthStatus, ModelOption } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -67,6 +67,12 @@ export const authApi = {
 };
 
 export const chatApi = {
+  // Get available models (filtered by configured API keys)
+  getAvailableModels: async (): Promise<ModelOption[]> => {
+    const response = await api.get('/chat/models');
+    return response.data;
+  },
+
   // Get all conversations
   getConversations: async (): Promise<Conversation[]> => {
     const response = await api.get('/chat/conversations');

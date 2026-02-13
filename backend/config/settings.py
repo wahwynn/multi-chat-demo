@@ -148,6 +148,10 @@ SESSION_COOKIE_AGE = 86400 * 7  # 1 week
 # Anthropic API Key
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 
+# GitHub API Key for GitHub Models (fine-grained PAT with models: read scope)
+# See https://docs.github.com/en/rest/models/inference
+GITHUB_API_KEY = os.getenv("GITHUB_API_KEY", "")
+
 # Ollama Base URL (defaults to localhost)
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 

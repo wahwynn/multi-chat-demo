@@ -3,10 +3,67 @@ import httpx
 import asyncio
 from typing import List, Tuple
 
+GITHUB_MODELS_BASE_URL = "https://models.github.ai"
+
+
+# Model definitions for availability checks (must match Conversation.MODEL_CHOICES)
+CLAUDE_MODELS = ["claude-sonnet-4-5", "claude-haiku-4-5", "claude-opus-4-5"]
+OLLAMA_MODELS = ["ollama-llama3.2", "ollama-llama3.1", "ollama-mistral", "ollama-phi3"]
+GITHUB_MODELS = [
+    "github-openai/gpt-4.1",
+    "github-openai/gpt-4o-mini",
+    "github-openai/gpt-4o",
+    "github-meta/llama-3.2-90b-vision-instruct",
+]
+
+MODEL_LABELS = {
+    "claude-sonnet-4-5": "Claude 4.5 Sonnet",
+    "claude-haiku-4-5": "Claude 4.5 Haiku",
+    "claude-opus-4-5": "Claude 4.5 Opus",
+    "ollama-llama3.2": "Ollama Llama 3.2",
+    "ollama-llama3.1": "Ollama Llama 3.1",
+    "ollama-mistral": "Ollama Mistral",
+    "ollama-phi3": "Ollama Phi-3",
+    "github-openai/gpt-4.1": "GitHub GPT-4.1",
+    "github-openai/gpt-4o-mini": "GitHub GPT-4o Mini",
+    "github-openai/gpt-4o": "GitHub GPT-4o",
+    "github-meta/llama-3.2-90b-vision-instruct": "GitHub Llama 3.2 90B Vision",
+}
+
+
+def get_available_models(
+    anthropic_api_key: str = "",
+    github_api_key: str = "",
+) -> list[dict[str, str]]:
+    """
+    Return list of enabled models based on configured API keys.
+    Each item is {"value": model_id, "label": display_name}.
+    """
+    models = []
+    if anthropic_api_key and anthropic_api_key.strip():
+        for m in CLAUDE_MODELS:
+            models.append({"value": m, "label": MODEL_LABELS[m]})
+    for m in OLLAMA_MODELS:
+        models.append({"value": m, "label": MODEL_LABELS[m]})
+    if github_api_key and github_api_key.strip():
+        for m in GITHUB_MODELS:
+            models.append({"value": m, "label": MODEL_LABELS[m]})
+    return models
+
 
 def is_ollama_model(model: str) -> bool:
     """Check if a model is an Ollama model"""
     return model.startswith("ollama-")
+
+
+def is_github_model(model: str) -> bool:
+    """Check if a model is a GitHub Models model"""
+    return model.startswith("github-")
+
+
+def get_github_model_id(model: str) -> str:
+    """Convert internal model ID to GitHub Models API format (strip github- prefix)"""
+    return model.replace("github-", "", 1)
 
 
 async def get_single_model_response_async(
@@ -14,15 +71,17 @@ async def get_single_model_response_async(
     model: str,
     api_key: str,
     ollama_base_url: str = "http://localhost:11434",
+    github_api_key: str = "",
 ) -> Tuple[str, str]:
     """
-    Get a response from a single model (Claude or Ollama) asynchronously
+    Get a response from a single model (Claude, Ollama, or GitHub Models) asynchronously
 
     Args:
         messages: List of tuples containing (role, content) for conversation history
         model: The model to use for the response
-        api_key: Anthropic API key (not used for Ollama)
+        api_key: Anthropic API key (not used for Ollama or GitHub Models)
         ollama_base_url: Base URL for Ollama API
+        github_api_key: GitHub API key for GitHub Models (requires models: read scope)
 
     Returns:
         Tuple of (model_id, response_text)
@@ -59,6 +118,57 @@ async def get_single_model_response_async(
                     model,
                     "I received a response, but it didn't contain any text content.",
                 )
+        elif is_github_model(model) and github_api_key:
+            # Use GitHub Models API
+            github_model_id = get_github_model_id(model)
+
+            # Convert messages to GitHub Models format
+            github_messages: list[dict[str, str]] = []
+            for role, content in messages:
+                github_messages.append({"role": role, "content": content})
+
+            async with httpx.AsyncClient(timeout=300.0) as client:
+                response = await client.post(
+                    f"{GITHUB_MODELS_BASE_URL}/inference/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {github_api_key}",
+                        "Accept": "application/vnd.github+json",
+                        "X-GitHub-Api-Version": "2022-11-28",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": github_model_id,
+                        "messages": github_messages,
+                        "stream": False,
+                        "max_tokens": 2048,
+                    },
+                )
+                response.raise_for_status()
+                response_data = response.json()
+
+            # Extract text from OpenAI-style response format
+            choices = response_data.get("choices", [])
+            if choices:
+                content = choices[0].get("message", {}).get("content", "")
+                if content:
+                    return (model, content)
+
+            return (
+                model,
+                "I received a response, but it didn't contain any text content.",
+            )
+        elif is_github_model(model) and not github_api_key:
+            return (
+                model,
+                "Error: GitHub API key (GITHUB_API_KEY) is required for GitHub Models. "
+                "Create a fine-grained personal access token with 'models: read' scope.",
+            )
+        elif not api_key or not api_key.strip():
+            return (
+                model,
+                "Error: Anthropic API key (ANTHROPIC_API_KEY) is required for Claude models. "
+                "Get your API key from https://console.anthropic.com/",
+            )
         else:
             # Use Anthropic API for Claude models
             anthropic_client: anthropic.AsyncAnthropic = anthropic.AsyncAnthropic(
@@ -104,22 +214,26 @@ async def get_multi_model_responses(
     models: List[str],
     api_key: str,
     ollama_base_url: str = "http://localhost:11434",
+    github_api_key: str = "",
 ) -> List[Tuple[str, str]]:
     """
-    Get responses from multiple models (Claude and/or Ollama) in parallel
+    Get responses from multiple models (Claude, Ollama, and/or GitHub Models) in parallel
 
     Args:
         messages: List of tuples containing (role, content) for conversation history
-        models: List of model IDs to query (Claude or Ollama)
-        api_key: Anthropic API key (not used for Ollama models)
+        models: List of model IDs to query (Claude, Ollama, or GitHub Models)
+        api_key: Anthropic API key (not used for Ollama or GitHub Models)
         ollama_base_url: Base URL for Ollama API
+        github_api_key: GitHub API key for GitHub Models (requires models: read scope)
 
     Returns:
         List of tuples: [(model_id, response_text), ...]
     """
     # Create tasks for all models
     tasks = [
-        get_single_model_response_async(messages, model, api_key, ollama_base_url)
+        get_single_model_response_async(
+            messages, model, api_key, ollama_base_url, github_api_key
+        )
         for model in models
     ]
 

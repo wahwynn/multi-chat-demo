@@ -13,7 +13,8 @@ from .schemas import (
     SendMessageSchema,
     ChatResponseSchema,
 )
-from .chatbot import get_multi_model_responses
+from .chatbot import get_multi_model_responses, get_available_models
+from .schemas import ModelOptionSchema
 
 router = Router()
 
@@ -29,6 +30,20 @@ def get_authenticated_user(request: HttpRequest):
     if request.user.is_authenticated:
         return request.user
     raise AuthenticationRequired("Authentication required")
+
+
+@router.get("/models", response={200: List[ModelOptionSchema], 401: dict})
+def list_available_models(request: HttpRequest):
+    """List AI models that are enabled based on configured API keys"""
+    try:
+        get_authenticated_user(request)
+    except AuthenticationRequired:
+        return 401, {"error": "Authentication required"}
+    models = get_available_models(
+        anthropic_api_key=getattr(settings, "ANTHROPIC_API_KEY", "") or "",
+        github_api_key=getattr(settings, "GITHUB_API_KEY", "") or "",
+    )
+    return 200, models
 
 
 @router.get("/conversations", response={200: List[ConversationListSchema], 401: dict})
@@ -53,6 +68,20 @@ def create_conversation(request: HttpRequest, payload: CreateConversationSchema)
     # Validate at least 1 model
     if not payload.selected_models:
         return 400, {"error": "Must select at least 1 model"}
+
+    # Validate all selected models are enabled (have API keys configured)
+    available_values = {
+        m["value"]
+        for m in get_available_models(
+            anthropic_api_key=getattr(settings, "ANTHROPIC_API_KEY", "") or "",
+            github_api_key=getattr(settings, "GITHUB_API_KEY", "") or "",
+        )
+    }
+    invalid = [m for m in payload.selected_models if m not in available_values]
+    if invalid:
+        return 400, {
+            "error": f"Models not available (missing API key): {', '.join(invalid)}"
+        }
 
     conversation = Conversation.objects.create(
         title=payload.title,
@@ -118,7 +147,7 @@ def delete_conversation(request: HttpRequest, conversation_id: int):
 
 @router.post(
     "/conversations/{conversation_id}/messages",
-    response={200: ChatResponseSchema, 401: dict},
+    response={200: ChatResponseSchema, 400: dict, 401: dict},
 )
 async def send_message(
     request: HttpRequest, conversation_id: int, payload: SendMessageSchema
@@ -178,12 +207,28 @@ async def send_message(
         get_recent_messages
     )()
 
+    # Filter to only models that are enabled (have API keys configured)
+    available_values = {
+        m["value"]
+        for m in get_available_models(
+            anthropic_api_key=getattr(settings, "ANTHROPIC_API_KEY", "") or "",
+            github_api_key=getattr(settings, "GITHUB_API_KEY", "") or "",
+        )
+    }
+    models_to_query = [m for m in conversation.selected_models if m in available_values]
+
+    if not models_to_query:
+        return 400, {
+            "error": "None of the selected models are available. Add ANTHROPIC_API_KEY or GITHUB_API_KEY to enable them."
+        }
+
     # Get responses from all selected models in parallel
     model_responses = await get_multi_model_responses(
         previous_messages,
-        conversation.selected_models,
+        models_to_query,
         settings.ANTHROPIC_API_KEY,
         settings.OLLAMA_BASE_URL,
+        getattr(settings, "GITHUB_API_KEY", ""),
     )
 
     # Create assistant messages for each model response

@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth.models import User
+from django.test import override_settings
 from chat.models import Conversation, Message
 
 
@@ -34,6 +35,54 @@ class TestChatAPI:
         )
         api_client.force_login(user)
         return api_client, user
+
+    def test_list_models_unauthenticated(self, api_client):
+        """Test listing models without authentication"""
+        response = api_client.get("/api/chat/models")
+        assert response.status_code == 401
+
+    def test_list_models_authenticated(self, authenticated_client):
+        """Test listing available models based on API keys"""
+        client, _ = authenticated_client
+        with override_settings(ANTHROPIC_API_KEY="test-key", GITHUB_API_KEY=""):
+            response = client.get("/api/chat/models")
+        assert response.status_code == 200
+        data = response.json()
+        model_values = [m["value"] for m in data]
+        assert "claude-sonnet-4-5" in model_values
+        assert "ollama-llama3.2" in model_values
+        assert "github-openai/gpt-4.1" not in model_values
+
+    def test_list_models_without_anthropic_key(self, authenticated_client):
+        """Test that Claude models are excluded when ANTHROPIC_API_KEY is missing"""
+        client, _ = authenticated_client
+        with override_settings(ANTHROPIC_API_KEY="", GITHUB_API_KEY=""):
+            response = client.get("/api/chat/models")
+        assert response.status_code == 200
+        data = response.json()
+        model_values = [m["value"] for m in data]
+        assert "claude-sonnet-4-5" not in model_values
+        assert "ollama-llama3.2" in model_values
+
+    def test_create_conversation_disabled_model_rejected(self, authenticated_client):
+        """Test that creating conversation with disabled model returns 400"""
+        client, _ = authenticated_client
+        with override_settings(ANTHROPIC_API_KEY="", GITHUB_API_KEY=""):
+            response = client.post(
+                "/api/chat/conversations",
+                data={
+                    "title": "My Chat",
+                    "selected_models": ["claude-sonnet-4-5"],
+                },
+                content_type="application/json",
+            )
+        assert response.status_code == 400
+        data = response.json()
+        assert "error" in data
+        assert (
+            "not available" in data["error"].lower()
+            or "missing" in data["error"].lower()
+        )
 
     def test_list_conversations_unauthenticated(self, api_client):
         """Test listing conversations without authentication"""

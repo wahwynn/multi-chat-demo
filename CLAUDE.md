@@ -39,7 +39,7 @@ For new contributors or fresh clones:
 
 ```bash
 # Backend setup
-# 1. Copy environment file and add ANTHROPIC_API_KEY
+# 1. Copy environment file (optionally add ANTHROPIC_API_KEY for Claude models)
 cp .env.example .env
 
 # 2. Sync dependencies
@@ -73,6 +73,7 @@ npm run dev
   - `admin.py`: Django admin configuration for models
 
 **Key Backend Patterns**:
+
 - CORS is configured to allow requests from Next.js frontend (localhost:3000)
 - Messages are stored with conversation history for context-aware responses
 - The Anthropic API key is loaded from environment variables via `python-dotenv`
@@ -93,6 +94,7 @@ npm run dev
     - `types.ts`: TypeScript interfaces matching backend schemas
 
 **Key Frontend Patterns**:
+
 - Client-side rendering with React hooks for state management
 - Optimistic UI updates with error handling
 - Auto-scrolling chat window
@@ -110,6 +112,7 @@ npm run dev
 ## Development Workflow
 
 ### Backend Development
+
 - All Python dependencies must be managed through `uv add` and `uv remove`
 - Use `uv run` to execute Python scripts and tools
 - Run `uv run python backend/manage.py makemigrations` after model changes
@@ -117,6 +120,7 @@ npm run dev
 - Access Django admin at http://localhost:8000/admin
 
 ### Frontend Development
+
 - Run `npm run dev` for development server with hot reload
 - Run `npm run build` to check for TypeScript/build errors
 - Run `npm run lint` to check for linting issues
@@ -136,16 +140,20 @@ Django Ninja provides automatic API documentation at `http://localhost:8000/api/
 ## Environment Variables
 
 ### Backend (.env)
-- `ANTHROPIC_API_KEY`: Your Anthropic API key for Claude integration (required)
+
+- `ANTHROPIC_API_KEY`: Your Anthropic API key for Claude integration (optional)
+- `GITHUB_API_KEY`: GitHub fine-grained PAT with `models: read` scope (required for GitHub Models)
 - `SECRET_KEY`: Django secret key (auto-generated, keep secure in production)
 - `DEBUG`: Django debug mode (set to False in production)
 
 ### Frontend (.env.local)
+
 - `NEXT_PUBLIC_API_URL`: Backend API URL (default: http://localhost:8000/api)
 
 ## Project Configuration
 
 The `.gitignore` is configured for:
+
 - Python build artifacts, caches, and virtual environments
 - Node.js modules and build outputs
 - Environment files (.env, .env.local)

@@ -53,6 +53,10 @@ class Conversation(models.Model):
         ("ollama-llama3.1", "Ollama Llama 3.1"),
         ("ollama-mistral", "Ollama Mistral"),
         ("ollama-phi3", "Ollama Phi-3"),
+        ("github-openai/gpt-4.1", "GitHub GPT-4.1"),
+        ("github-openai/gpt-4o-mini", "GitHub GPT-4o Mini"),
+        ("github-openai/gpt-4o", "GitHub GPT-4o"),
+        ("github-meta/llama-3.2-90b-vision-instruct", "GitHub Llama 3.2 90B Vision"),
     ]
 
     VALID_MODELS = [choice[0] for choice in MODEL_CHOICES]
