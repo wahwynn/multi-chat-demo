@@ -110,11 +110,13 @@ You can select multiple AI models to compare their responses:
 
 _The model selection dropdown with multiple models selected_
 
-Available models may include:
+Available models depend on your administrator's configuration. All model providers are optional:
 
-- Claude Sonnet 4.5
-- Ollama models
-- Other configured AI models
+- **Claude models** — when `ANTHROPIC_API_KEY` is configured
+- **Ollama models** — when Ollama is running
+- **GitHub Models** — when `GITHUB_API_KEY` is configured
+
+Only models whose provider is available will appear in the dropdown.
 
 ### Renaming Conversations
 

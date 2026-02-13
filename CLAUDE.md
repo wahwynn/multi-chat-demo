@@ -141,8 +141,11 @@ Django Ninja provides automatic API documentation at `http://localhost:8000/api/
 
 ### Backend (.env)
 
-- `ANTHROPIC_API_KEY`: Your Anthropic API key for Claude integration (optional)
-- `GITHUB_API_KEY`: GitHub fine-grained PAT with `models: read` scope (required for GitHub Models)
+All AI model providers are optional. Model availability depends on configured API keys or running services:
+
+- `ANTHROPIC_API_KEY`: Anthropic API key (optional; enables Claude models when set)
+- `GITHUB_API_KEY`: GitHub fine-grained PAT with `models: read` scope (optional; enables GitHub Models when set)
+- `OLLAMA_BASE_URL`: Ollama API base URL (optional; enables Ollama models when Ollama is running; default: http://localhost:11434)
 - `SECRET_KEY`: Django secret key (auto-generated, keep secure in production)
 - `DEBUG`: Django debug mode (set to False in production)
 

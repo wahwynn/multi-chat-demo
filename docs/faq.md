@@ -174,13 +174,13 @@ No, Multi-Chat Demo requires an active internet connection to communicate with A
 
 ### What AI models are available?
 
-Available models depend on your configuration. Common models include:
+All model providers (Anthropic, Ollama, GitHub Models) are optional. Available models depend on your administrator's configuration:
 
-- Claude Sonnet 4.5
-- Ollama models
-- Other configured models
+- **Claude models** — require `ANTHROPIC_API_KEY` to be set
+- **Ollama models** — require a running Ollama instance
+- **GitHub Models** — require `GITHUB_API_KEY` to be set
 
-Check with your administrator for the complete list.
+Only models whose provider is configured will appear in the app. Check with your administrator for the complete list.
 
 ### Can I add custom AI models?
 
