@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from django.contrib.auth.models import User
 from django.test import override_settings
 from chat.models import Conversation, Message
@@ -44,7 +45,10 @@ class TestChatAPI:
     def test_list_models_authenticated(self, authenticated_client):
         """Test listing available models based on API keys"""
         client, _ = authenticated_client
-        with override_settings(ANTHROPIC_API_KEY="test-key", GITHUB_API_KEY=""):
+        with (
+            override_settings(ANTHROPIC_API_KEY="test-key", GITHUB_API_KEY=""),
+            patch("chat.chatbot.check_ollama_available", return_value=True),
+        ):
             response = client.get("/api/chat/models")
         assert response.status_code == 200
         data = response.json()
@@ -56,13 +60,29 @@ class TestChatAPI:
     def test_list_models_without_anthropic_key(self, authenticated_client):
         """Test that Claude models are excluded when ANTHROPIC_API_KEY is missing"""
         client, _ = authenticated_client
-        with override_settings(ANTHROPIC_API_KEY="", GITHUB_API_KEY=""):
+        with (
+            override_settings(ANTHROPIC_API_KEY="", GITHUB_API_KEY=""),
+            patch("chat.chatbot.check_ollama_available", return_value=True),
+        ):
             response = client.get("/api/chat/models")
         assert response.status_code == 200
         data = response.json()
         model_values = [m["value"] for m in data]
         assert "claude-sonnet-4-5" not in model_values
         assert "ollama-llama3.2" in model_values
+
+    def test_list_models_ollama_unavailable(self, authenticated_client):
+        """Test that Ollama models are excluded when Ollama is not running"""
+        client, _ = authenticated_client
+        with (
+            override_settings(ANTHROPIC_API_KEY="", GITHUB_API_KEY=""),
+            patch("chat.chatbot.check_ollama_available", return_value=False),
+        ):
+            response = client.get("/api/chat/models")
+        assert response.status_code == 200
+        data = response.json()
+        model_values = [m["value"] for m in data]
+        assert "ollama-llama3.2" not in model_values
 
     def test_create_conversation_disabled_model_rejected(self, authenticated_client):
         """Test that creating conversation with disabled model returns 400"""
@@ -145,14 +165,15 @@ class TestChatAPI:
     def test_create_conversation_success(self, authenticated_client):
         """Test successful conversation creation"""
         client, user = authenticated_client
-        response = client.post(
-            "/api/chat/conversations",
-            data={
-                "title": "My Chat",
-                "selected_models": ["claude-sonnet-4-5", "claude-haiku-4-5"],
-            },
-            content_type="application/json",
-        )
+        with override_settings(ANTHROPIC_API_KEY="test-key"):
+            response = client.post(
+                "/api/chat/conversations",
+                data={
+                    "title": "My Chat",
+                    "selected_models": ["claude-sonnet-4-5", "claude-haiku-4-5"],
+                },
+                content_type="application/json",
+            )
         assert response.status_code == 200
         data = response.json()
         assert data["title"] == "My Chat"

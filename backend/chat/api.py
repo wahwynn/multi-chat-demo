@@ -42,6 +42,7 @@ def list_available_models(request: HttpRequest):
     models = get_available_models(
         anthropic_api_key=getattr(settings, "ANTHROPIC_API_KEY", "") or "",
         github_api_key=getattr(settings, "GITHUB_API_KEY", "") or "",
+        ollama_base_url=getattr(settings, "OLLAMA_BASE_URL", "http://localhost:11434"),
     )
     return 200, models
 
@@ -75,6 +76,9 @@ def create_conversation(request: HttpRequest, payload: CreateConversationSchema)
         for m in get_available_models(
             anthropic_api_key=getattr(settings, "ANTHROPIC_API_KEY", "") or "",
             github_api_key=getattr(settings, "GITHUB_API_KEY", "") or "",
+            ollama_base_url=getattr(
+                settings, "OLLAMA_BASE_URL", "http://localhost:11434"
+            ),
         )
     }
     invalid = [m for m in payload.selected_models if m not in available_values]
@@ -213,6 +217,9 @@ async def send_message(
         for m in get_available_models(
             anthropic_api_key=getattr(settings, "ANTHROPIC_API_KEY", "") or "",
             github_api_key=getattr(settings, "GITHUB_API_KEY", "") or "",
+            ollama_base_url=getattr(
+                settings, "OLLAMA_BASE_URL", "http://localhost:11434"
+            ),
         )
     }
     models_to_query = [m for m in conversation.selected_models if m in available_values]

@@ -4,6 +4,8 @@ from chat.chatbot import (
     is_ollama_model,
     is_github_model,
     get_github_model_id,
+    check_ollama_available,
+    get_available_models,
     get_single_model_response_async,
     get_multi_model_responses,
 )
@@ -41,6 +43,44 @@ class TestChatbotHelpers:
             get_github_model_id("github-meta/llama-3.2-90b-vision-instruct")
             == "meta/llama-3.2-90b-vision-instruct"
         )
+
+    def test_check_ollama_available_when_running(self):
+        """Test that check_ollama_available returns True when Ollama responds"""
+        with patch("chat.chatbot.httpx.Client") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_client.return_value.__enter__.return_value.get.return_value = (
+                mock_response
+            )
+            assert check_ollama_available("http://localhost:11434") is True
+
+    def test_check_ollama_available_when_not_running(self):
+        """Test that check_ollama_available returns False when Ollama is unreachable"""
+        with patch("chat.chatbot.httpx.Client") as mock_client:
+            mock_client.return_value.__enter__.return_value.get.side_effect = Exception(
+                "Connection refused"
+            )
+            assert check_ollama_available("http://localhost:11434") is False
+
+    def test_get_available_models_includes_ollama_when_available(self):
+        """Test that Ollama models are included when Ollama is running"""
+        with patch("chat.chatbot.check_ollama_available", return_value=True):
+            models = get_available_models(
+                anthropic_api_key="",
+                github_api_key="",
+            )
+        values = [m["value"] for m in models]
+        assert "ollama-llama3.2" in values
+
+    def test_get_available_models_excludes_ollama_when_unavailable(self):
+        """Test that Ollama models are excluded when Ollama is not running"""
+        with patch("chat.chatbot.check_ollama_available", return_value=False):
+            models = get_available_models(
+                anthropic_api_key="",
+                github_api_key="",
+            )
+        values = [m["value"] for m in models]
+        assert "ollama-llama3.2" not in values
 
 
 @pytest.mark.asyncio

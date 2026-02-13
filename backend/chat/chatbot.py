@@ -31,20 +31,32 @@ MODEL_LABELS = {
 }
 
 
+def check_ollama_available(ollama_base_url: str = "http://localhost:11434") -> bool:
+    """Check if Ollama is running and reachable at the given base URL."""
+    try:
+        with httpx.Client(timeout=2.0) as client:
+            response = client.get(f"{ollama_base_url.rstrip('/')}/api/version")
+            return bool(response.status_code == 200)
+    except Exception:
+        return False
+
+
 def get_available_models(
     anthropic_api_key: str = "",
     github_api_key: str = "",
+    ollama_base_url: str = "http://localhost:11434",
 ) -> list[dict[str, str]]:
     """
-    Return list of enabled models based on configured API keys.
+    Return list of enabled models based on configured API keys and Ollama availability.
     Each item is {"value": model_id, "label": display_name}.
     """
     models = []
     if anthropic_api_key and anthropic_api_key.strip():
         for m in CLAUDE_MODELS:
             models.append({"value": m, "label": MODEL_LABELS[m]})
-    for m in OLLAMA_MODELS:
-        models.append({"value": m, "label": MODEL_LABELS[m]})
+    if check_ollama_available(ollama_base_url):
+        for m in OLLAMA_MODELS:
+            models.append({"value": m, "label": MODEL_LABELS[m]})
     if github_api_key and github_api_key.strip():
         for m in GITHUB_MODELS:
             models.append({"value": m, "label": MODEL_LABELS[m]})
