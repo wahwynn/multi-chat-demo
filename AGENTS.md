@@ -30,3 +30,5 @@ Full-stack multi-model AI chatbot: Django Ninja backend (port 8000) + Next.js 16
 - **npm peer dep conflict**: `@testing-library/react@14` conflicts with React 19. Use `npm install --legacy-peer-deps` (already in the update script).
 - **Environment files**: Copy `.env.example` -> `.env` and `frontend/.env.local.example` -> `frontend/.env.local` before first run. These are not created by the update script since they may contain user secrets.
 - **Migrations**: Run `uv run python backend/manage.py migrate` after pulling changes that add new migrations. This is not in the update script to avoid brittleness.
+- **API key via env var**: If `ANTHROPIC_API_KEY` is set as a Cursor secret / environment variable, write it into `.env` so Django's `python-dotenv` picks it up: `echo "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" > .env`. The backend must be restarted after changing `.env`.
+- **Backend hot-reload**: Django's `runserver` auto-reloads on code changes but does **not** re-read `.env`. Restart the server after modifying `.env`.
